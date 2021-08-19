@@ -1,0 +1,6 @@
+{
+  "param": {
+    "value": ["uint64", 0],
+    "description": "Description of param"
+  }
+}
