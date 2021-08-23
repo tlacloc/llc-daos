@@ -6,8 +6,8 @@ const contract = (name, nameOnChain) => {
     nameOnChain,
     type: 'contract',
     stakes: {
-      cpu: '20.0000 TLOS',
-      net: '20.0000 TLOS',
+      cpu: '40.0000 TLOS',
+      net: '40.0000 TLOS',
       ram: 1000000
     }
   }
@@ -21,7 +21,7 @@ const supportedChains = {
 
 const ownerByChain = {
   [supportedChains.local]: 'eosio',
-  [supportedChains.telosTestnet]: 'm1ownerp2pex',
+  [supportedChains.telosTestnet]: 'llcdaomowner',
   [supportedChains.telosMainnet]: ''
 }
 
@@ -31,8 +31,10 @@ const ownerPublicKeysByChain = {
     active: 'EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV'
   },
   [supportedChains.telosTestnet]: {
-    owner: 'EOS6PtkWLquhJYFxjU8mWTtg8eZWWjp39FQ2m3Xrceun9V8Z6fZNQ',
-    active: 'EOS6PtkWLquhJYFxjU8mWTtg8eZWWjp39FQ2m3Xrceun9V8Z6fZNQ'
+    owner: 'EOS8CiMM6Lqsahghzy7LSqxcRc67PG8n2gnjaTQ1ePG5nWwnqYWEm',
+    active: 'EOS8CiMM6Lqsahghzy7LSqxcRc67PG8n2gnjaTQ1ePG5nWwnqYWEm'
+    // owner: 'EOS6PtkWLquhJYFxjU8mWTtg8eZWWjp39FQ2m3Xrceun9V8Z6fZNQ',
+    // active: 'EOS6PtkWLquhJYFxjU8mWTtg8eZWWjp39FQ2m3Xrceun9V8Z6fZNQ'
   },
   [supportedChains.telosMainnet]: {
 
@@ -45,8 +47,10 @@ const publicKeysByChain = {
     active: 'EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV'
   },
   [supportedChains.telosTestnet]: {
-    owner: 'EOS6PtkWLquhJYFxjU8mWTtg8eZWWjp39FQ2m3Xrceun9V8Z6fZNQ',
-    active: 'EOS6PtkWLquhJYFxjU8mWTtg8eZWWjp39FQ2m3Xrceun9V8Z6fZNQ'
+    owner: 'EOS8CiMM6Lqsahghzy7LSqxcRc67PG8n2gnjaTQ1ePG5nWwnqYWEm',
+    active: 'EOS8CiMM6Lqsahghzy7LSqxcRc67PG8n2gnjaTQ1ePG5nWwnqYWEm'
+    // owner: 'EOS6PtkWLquhJYFxjU8mWTtg8eZWWjp39FQ2m3Xrceun9V8Z6fZNQ',
+    // active: 'EOS6PtkWLquhJYFxjU8mWTtg8eZWWjp39FQ2m3Xrceun9V8Z6fZNQ'
   },
   [supportedChains.telosMainnet]: {
 
@@ -56,12 +60,12 @@ const publicKeysByChain = {
 const contractsConfig = {
   [supportedChains.local]: [
     contract('nullcontract', 'm1nulldaos'),
-    contract('daoreg', 'daoregistry'),
-    contract('daoinf', 'daoinfo')
+    contract('daoreg', 'daoregistry1'),
+    contract('daoinf', 'daoinfor1111')
   ],
   [supportedChains.telosTestnet]: [
-    contract('daoreg', 'daoregistry'),
-    contract('daoinf', 'daoinfo')
+    contract('daoreg', 'daoregistry1'),
+    contract('daoinf', 'daoinfor1111')
   ],
   [supportedChains.telosMainnet]: [
 

@@ -24,7 +24,9 @@
     "dotenv": "^8.2.0",
     "elliptic": "^6.5.4",
     "eosjs": "^21.0.3",
+    "fs-extra": "^9.1.0",
     "node-fetch": "^2.6.1",
+    "handlebars": "^4.7.6",
     "promisify": "^0.0.3",
     "prompt-sync": "^4.2.0"
   },
