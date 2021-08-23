@@ -4,9 +4,9 @@ const { exec } = require('child_process')
 const { promisify } = require('util')
 const fs = require('fs')
 const { join } = require('path')
-const dir = './tmp/';
 
 const existsAsync = promisify(fs.exists)
+const removeDir = promisify(fs.rm)
 const fse = require('fs-extra')
 
 const execCommand = promisify(exec)
@@ -39,15 +39,19 @@ async function compileContract ({
   await deleteFile(join(compiled, `${contract}.wasm`))
   await deleteFile(join(compiled, `${contract}.abi`))
 
+  // Download document-graph
+  // await execCommand('git submodule init')
+  // await execCommand('git submodule update')
+
   // copy document-graph submodule to the project's paths
-  const docGraphInclude = dir + 'include/document_graph'
-  const docGraphSrc = dir + 'src/document_graph'
+  const docGraphInclude = 'include/document_graph'
+  const docGraphSrc = 'src/document_graph'
 
   const docGraphIncludeFound = await existsAsync(docGraphInclude)
   const docGraphSrcFound = await existsAsync(docGraphSrc)
 
   if (!docGraphIncludeFound) {
-    fse.copySync(dir + 'document-graph/include/document_graph', docGraphInclude, { overwrite: true }, (err) => {
+    fse.copySync('document-graph/include/document_graph', docGraphInclude, { overwrite: true }, (err) => {
       if (err) {
         throw new Error(''+err)
       } else {
@@ -57,7 +61,7 @@ async function compileContract ({
   }
 
   if (!docGraphSrcFound) {
-    fse.copySync(dir + 'document-graph/src/document_graph', docGraphSrc, { overwrite: true }, (err) => {
+    fse.copySync('document-graph/src/document_graph', docGraphSrc, { overwrite: true }, (err) => {
       if (err) {
         throw new Error(''+err)
       } else {
@@ -65,8 +69,6 @@ async function compileContract ({
       }
     })
   }
-  
-  
 
   await execCommand(cmd)
 
