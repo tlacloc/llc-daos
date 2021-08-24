@@ -21,6 +21,12 @@ CONTRACT daoreg : public contract {
 
     ACTION reset();
 
+    ACTION create(const name& org_name, const name& creator, const std::string& ipfs); 
+
+    ACTION update(const uint64_t& org_id, const name& org_name, const name& creator, const std::string& ipfs);
+
+    ACTION delorg(const uint64_t& org_id, const name& creator);
+
   private:
 
     DEFINE_CONFIG_TABLE
@@ -29,6 +35,17 @@ CONTRACT daoreg : public contract {
     DEFINE_USERS_TABLE
 
     config_tables config;
+
+    TABLE organizations {
+      uint64_t org_id;
+      std::string org_name;
+      name creator;
+      std::string ipfs
+
+      auto primary_key () const { return org_id; }
+    };
+
+    typedef multi_index<name("org_table"), organizations> organizations_table;
 
 };
 
