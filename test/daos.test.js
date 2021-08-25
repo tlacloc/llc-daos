@@ -20,7 +20,7 @@ describe('daos', async function () {
       console.log('These tests should only be run on local node')
       process.exit(1)
     }
-    contracts = await getContracts(daoreg)
+    contracts = await getContracts([daoreg])
     daosUsers = [firstuser, seconduser, thirduser]
     await setParamsValue()
   })
@@ -34,11 +34,11 @@ describe('daos', async function () {
     // await contracts.daoreg.create('org2', firstuser, 'HASH', { authorization: `${firstuser}@active` })
 
     try {
-      await contracts.daoreg.create('org1', firstuser, 'HASH', { authorization: `${firstuser}@active` })
+      await contracts.daoreg.create('org1', firstuser, 'HASH', { authorization: `${daoinf}@active` })
     } catch (error) {
       assertError({
         error,
-        textInside: `transaction declares authority '{"actor":"testuseraaa","permission":"active"}', but does not have signatures for it.`,
+        textInside: `missing authority of testuseraaa`,
         message: 'user must be have authorization (expected)',
         throwError: true
       })
@@ -54,11 +54,11 @@ describe('daos', async function () {
 
     // dao cannot be updated by someone else
     try {
-      await contracts.daoreg.update('org1', 'HASH_new2', { authorization: `${firstuser}@active` })
+      await contracts.daoreg.update('org1', 'HASH_new2', { authorization: `${daoinf}@active` })
     } catch (error) {
       assertError({
         error,
-        textInside: `transaction declares authority '{"actor":"testuseraaa","permission":"active"}', but does not have signatures for it.`,
+        textInside: `missing authority of daoregistry`,
         message: 'dao cannot be updated by someone else (expected)',
         throwError: true
       })
@@ -73,11 +73,11 @@ describe('daos', async function () {
 
     // delete dao by someone else (no daoreg)
     try {
-      await contracts.daoreg.delorg('org1', { authorization: `${firstuser}@active` })
+      await contracts.daoreg.delorg('org1', { authorization: `${daoinf}@active` })
     } catch (error) {
       assertError({
         error,
-        textInside: `transaction declares authority '{"actor":"testuseraaa","permission":"active"}', but does not have signatures for it.`,
+        textInside: `missing authority of daoregistry`,
         message: 'users can not delete dao (expected)',
         throwError: true
       })
@@ -85,6 +85,6 @@ describe('daos', async function () {
   })
 
   await contracts.daoreg.delorg('org1', { authorization: `${daoreg}@active` })
-  
+
 })
 
