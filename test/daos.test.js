@@ -6,13 +6,12 @@ const { assertError } = require('../scripts/eosio-errors')
 const { contractNames, isLocalNode, sleep } = require('../scripts/config')
 const { setParamsValue } = require('../scripts/contract-settings')
 
-const { daos } = contractNames
-const { firstuser, seconduser, thirduser, fourthuser } = daosAccounts
+const { daoinfo, daoreg } = contractNames
+// const { firstuser, seconduser, thirduser, fourthuser } = daosAccounts
 
 describe('daos', async function () {
-
   it('Should pass', async () => {
     assert.deepStrictEqual(true, true)
   })
-
 })
+

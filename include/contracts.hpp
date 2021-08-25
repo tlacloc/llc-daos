@@ -6,8 +6,8 @@ using namespace eosio;
 
 namespace contracts
 {
-  const name daoreg = "daoregistry"_n;
-  const name daoinf = "daoinfo"_n;
+  const name daoreg = "daoregistry1"_n;
+  const name daoinf = "daoinfor1111"_n;
 }
 
 namespace others
