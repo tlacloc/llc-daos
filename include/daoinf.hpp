@@ -20,6 +20,8 @@ using namespace eosio;
 // using namespace utils;
 using std::string;
 
+typedef std::variant<asset, string, time_point, name, int64_t> ContentVariant;
+
 CONTRACT daoinf : public contract {
 
   public:
@@ -35,23 +37,26 @@ CONTRACT daoinf : public contract {
 
     ACTION initdao();
 
-    // ACTION addentry (string label, variant value);
+    ACTION addentry(const string & label, const hypha::Content & value);
 
-    // ACTION editentry (string label, variant value);
+    ACTION editentry(const string & label, const hypha::Content & value);
 
-    // ACTION delentry (string label);
+    ACTION delentry(const string & label);
 
   private:
 
     int64_t active_cutoff_date();
     hypha::Document get_root_node();
+    hypha::Document get_dao_node();
+    void update_node(hypha::Document * node_doc, const string & content_group_label, const std::vector<hypha::Content> & new_contents);
+
     hypha::DocumentGraph m_documentGraph = hypha::DocumentGraph(get_self());
 };
 
 extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
   switch (action) {
     EOSIO_DISPATCH_HELPER(daoinf, (reset)
-      (initdao)
+      (initdao)(addentry)
       // (updatecontent)
     )
   }

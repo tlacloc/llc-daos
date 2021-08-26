@@ -34,7 +34,7 @@ CONTRACT daoreg : public contract {
 
 extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
   switch (action) {
-      EOSIO_DISPATCH_HELPER(daoreg,
+    EOSIO_DISPATCH_HELPER(daoreg,
       (reset)
     )
   }
