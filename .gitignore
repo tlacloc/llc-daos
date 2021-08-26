@@ -5,4 +5,5 @@ compiled
 
 # Document graph
 include/document_graph
+include/logger
 src/document_graph

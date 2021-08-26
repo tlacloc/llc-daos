@@ -44,6 +44,7 @@ async function compileContract ({
 
   // copy document-graph submodule to the project's paths
   const docGraphInclude = 'include/document_graph'
+  const docGraphIncludeLogger = 'include/logger'
   const docGraphSrc = 'src/document_graph'
 
   const docGraphIncludeFound = await existsAsync(docGraphInclude)
@@ -51,6 +52,13 @@ async function compileContract ({
 
   if (!docGraphIncludeFound) {
     fse.copySync('document-graph/include/document_graph', docGraphInclude, { overwrite: true }, (err) => {
+      if (err) {
+        throw new Error(''+err)
+      } else {
+        console.log("document graph submodule include prepared")
+      }
+    })
+    fse.copySync('document-graph/include/logger', docGraphIncludeLogger, { overwrite: true }, (err) => {
       if (err) {
         throw new Error(''+err)
       } else {
