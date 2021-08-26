@@ -6,7 +6,6 @@ const fs = require('fs')
 const { join } = require('path')
 
 const existsAsync = promisify(fs.exists)
-const removeDir = promisify(fs.rm)
 const fse = require('fs-extra')
 
 const execCommand = promisify(exec)
@@ -28,7 +27,7 @@ async function compileContract ({
   if (process.env.COMPILER === 'local') {
     cmd = `eosio-cpp -abigen -I ./include -contract ${contract} -o ./compiled/${contract}.wasm ${path}`
   } else {
-    cmd = `docker run --rm --name eosio.cdt_v1.6.1 --volume ${join(__dirname, '../')}:/project -w /project eostudio/eosio.cdt:v1.6.1 /bin/bash -c "echo 'starting';eosio-cpp -abigen -I ./include -contract ${contract} -o ./compiled/${contract}.wasm ${path}"`
+    cmd = `docker run --rm --name eosio.cdt_v1.7.0-rc1 --volume ${join(__dirname, '../')}:/project -w /project eostudio/eosio.cdt:v1.7.0-rc1 /bin/bash -c "echo 'starting';eosio-cpp -abigen -I ./include -contract ${contract} -o ./compiled/${contract}.wasm ${path}"`
   }
   console.log("compiler command: " + cmd, '\n')
 
@@ -45,13 +44,25 @@ async function compileContract ({
 
   // copy document-graph submodule to the project's paths
   const docGraphInclude = 'include/document_graph'
+  const docGraphIncludeLogger = 'include/logger'
   const docGraphSrc = 'src/document_graph'
 
   const docGraphIncludeFound = await existsAsync(docGraphInclude)
   const docGraphSrcFound = await existsAsync(docGraphSrc)
+  const docGraphIncludeLoggerFound = await existsAsync(docGraphIncludeLogger)
 
   if (!docGraphIncludeFound) {
     fse.copySync('document-graph/include/document_graph', docGraphInclude, { overwrite: true }, (err) => {
+      if (err) {
+        throw new Error(''+err)
+      } else {
+        console.log("document graph submodule include prepared")
+      }
+    })
+  }
+
+  if (!docGraphIncludeLoggerFound) {
+    fse.copySync('document-graph/include/logger', docGraphIncludeLogger, { overwrite: true }, (err) => {
       if (err) {
         throw new Error(''+err)
       } else {
