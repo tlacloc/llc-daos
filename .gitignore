@@ -6,4 +6,3 @@ compiled
 # Document graph
 include/document_graph
 src/document_graph
-document-graph
