@@ -51,7 +51,7 @@ async function compileContract ({
   const docGraphSrcFound = await existsAsync(docGraphSrc)
 
   if (!docGraphIncludeFound) {
-    fse.copySync('tmp/document-graph/include/document_graph', docGraphInclude, { overwrite: true }, (err) => {
+    fse.copySync('document-graph/include/document_graph', docGraphInclude, { overwrite: true }, (err) => {
       if (err) {
         throw new Error(''+err)
       } else {
@@ -61,7 +61,7 @@ async function compileContract ({
   }
 
   if (!docGraphSrcFound) {
-    fse.copySync('tmp/document-graph/src/document_graph', docGraphSrc, { overwrite: true }, (err) => {
+    fse.copySync('document-graph/src/document_graph', docGraphSrc, { overwrite: true }, (err) => {
       if (err) {
         throw new Error(''+err)
       } else {
