@@ -10,7 +10,7 @@
 ACTION daoinf::reset () {
   require_auth(get_self());
 
-  document_table d_t(get_self(), get_self().value);
+  Es q d_t(get_self(), get_self().value);
   auto ditr = d_t.begin();
   while (ditr != d_t.end()) {
     ditr = d_t.erase(ditr);
@@ -38,24 +38,25 @@ ACTION daoinf::initdao() {
   // create the dao node
   hypha::ContentGroups dao_info_cgs {
     hypha::ContentGroup {
+      hypha::Content(hypha::CONTENT_GROUP_LABEL, FIXED_DETAILS),
+      hypha::Content(OWNER, get_self())
+    }
+  };
+
+  hypha::ContentGroups dao_info_v_cgs {
+    hypha::ContentGroup {
       hypha::Content(hypha::CONTENT_GROUP_LABEL, VARIABLE_DETAILS),
       hypha::Content(OWNER, get_self())
     }
   };
 
-  // hypha::ContentGroups dao_info_v_cgs {
-  //   hypha::ContentGroup {
-  //     hypha::Content(hypha::CONTENT_GROUP_LABEL, FIXED_DETAILS),
-  //     hypha::Content(TYPE, graph::DAO_INFO),
-  //     hypha::Content(OWNER, get_self())
-  //   }
-  // };
-
   hypha::Document root_doc(get_self(), get_self(), std::move(root_cgs));
   hypha::Document dao_info_doc(get_self(), get_self(), std::move(dao_info_cgs));
+  hypha::Document dao_info_v_doc(get_self(), get_self(), std::move(dao_info_v_cgs));
 
   hypha::Edge::write(get_self(), get_self(), root_doc.getHash(), dao_info_doc.getHash(), graph::OWNS_DAO_INFO);
   hypha::Edge::write(get_self(), get_self(), dao_info_doc.getHash(), root_doc.getHash(), graph::OWNED_BY);
+  hypha::Edge::write(get_self(), get_self(), dao_info_doc.getHash(), dao_info_v_doc.getHash(), graph::VARIABLE);
 }
 
 ACTION daoinf::addentry(const string & label, const hypha::Content & value) {
