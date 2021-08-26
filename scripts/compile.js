@@ -6,7 +6,6 @@ const fs = require('fs')
 const { join } = require('path')
 
 const existsAsync = promisify(fs.exists)
-const removeDir = promisify(fs.rm)
 const fse = require('fs-extra')
 
 const execCommand = promisify(exec)
@@ -28,7 +27,7 @@ async function compileContract ({
   if (process.env.COMPILER === 'local') {
     cmd = `eosio-cpp -abigen -I ./include -contract ${contract} -o ./compiled/${contract}.wasm ${path}`
   } else {
-    cmd = `docker run --rm --name eosio.cdt_v1.6.1 --volume ${join(__dirname, '../')}:/project -w /project eostudio/eosio.cdt:v1.6.1 /bin/bash -c "echo 'starting';eosio-cpp -abigen -I ./include -contract ${contract} -o ./compiled/${contract}.wasm ${path}"`
+    cmd = `docker run --rm --name eosio.cdt_v1.7.0-rc1 --volume ${join(__dirname, '../')}:/project -w /project eostudio/eosio.cdt:v1.7.0-rc1 /bin/bash -c "echo 'starting';eosio-cpp -abigen -I ./include -contract ${contract} -o ./compiled/${contract}.wasm ${path}"`
   }
   console.log("compiler command: " + cmd, '\n')
 
