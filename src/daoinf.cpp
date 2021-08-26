@@ -10,13 +10,13 @@
 ACTION daoinf::reset () {
   require_auth(get_self());
 
-  Es q d_t(get_self(), get_self().value);
+  document_table d_t(_self, get_self().value);
   auto ditr = d_t.begin();
   while (ditr != d_t.end()) {
     ditr = d_t.erase(ditr);
   }
 
-  edge_table e_t(get_self(), get_self().value);
+  edge_table e_t(_self, get_self().value);
   auto eitr = e_t.begin();
   while (eitr != e_t.end()) {
     eitr = e_t.erase(eitr);
@@ -79,13 +79,13 @@ ACTION daoinf::editentry(const string & label, const hypha::Content & value) {
   });
 }
 
-ACTION daoinf::delentry(const string & label, const hypha::Content & value) {
+ACTION daoinf::delentry(const string & label) {
   require_auth(get_self());
 
   hypha::Document dao_doc = get_dao_node();
   hypha::ContentWrapper dao_cw = dao_doc.getContentWrapper();
 
-  hypha::Content cont_to_del = dao_cw.getOrFail(VARIABLE_DETAILS, label, string("Content not found"));
+  hypha::Content * cont_to_del = dao_cw.getOrFail(VARIABLE_DETAILS, label, string("Content not found"));
 
   hypha::ContentWrapper.removeContent(VARIABLE_DETAILS, cont_to_del);
 }

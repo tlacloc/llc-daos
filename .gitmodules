@@ -1,3 +1,3 @@
-[submodule "document-graph"]
-	path = document-graph
+[submodule "document-graph2"]
+	path = document-graph2
 	url = https://github.com/hypha-dao/document-graph/tree/develop

@@ -3,6 +3,5 @@ node_modules
 compiled
 .vscode
 
-# Document graph
 include/document_graph
 src/document_graph
