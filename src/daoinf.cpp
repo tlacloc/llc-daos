@@ -10,7 +10,7 @@
 ACTION daoinf::reset () {
   require_auth(get_self());
 
-  document_table d_t(_self, get_self().value);
+  document_table d_t(_self, _self.value);
   auto ditr = d_t.begin();
   while (ditr != d_t.end()) {
     ditr = d_t.erase(ditr);
@@ -23,10 +23,10 @@ ACTION daoinf::reset () {
   }
 }
 
-ACTION daoinf::initdao() {
+ACTION daoinf::initdao(const name & creator) {
   require_auth(get_self());
 
-    // create the root node
+    // creates the root node
   hypha::ContentGroups root_cgs {
     hypha::ContentGroup {
       hypha::Content(hypha::CONTENT_GROUP_LABEL, FIXED_DETAILS),
@@ -35,15 +35,13 @@ ACTION daoinf::initdao() {
     }
   };
 
-  // create the dao node
+  // creates the dao node
   hypha::ContentGroups dao_info_cgs {
     hypha::ContentGroup {
       hypha::Content(hypha::CONTENT_GROUP_LABEL, FIXED_DETAILS),
+      hypha::Content(CREATOR, creator),
       hypha::Content(OWNER, get_self())
-    }
-  };
-
-  hypha::ContentGroups dao_info_v_cgs {
+    },
     hypha::ContentGroup {
       hypha::Content(hypha::CONTENT_GROUP_LABEL, VARIABLE_DETAILS),
       hypha::Content(OWNER, get_self())
@@ -52,27 +50,37 @@ ACTION daoinf::initdao() {
 
   hypha::Document root_doc(get_self(), get_self(), std::move(root_cgs));
   hypha::Document dao_info_doc(get_self(), get_self(), std::move(dao_info_cgs));
-  hypha::Document dao_info_v_doc(get_self(), get_self(), std::move(dao_info_v_cgs));
 
   hypha::Edge::write(get_self(), get_self(), root_doc.getHash(), dao_info_doc.getHash(), graph::OWNS_DAO_INFO);
   hypha::Edge::write(get_self(), get_self(), dao_info_doc.getHash(), root_doc.getHash(), graph::OWNED_BY);
-  hypha::Edge::write(get_self(), get_self(), dao_info_doc.getHash(), dao_info_v_doc.getHash(), graph::VARIABLE);
 }
 
-ACTION daoinf::addentry(const string & label, const hypha::Content & value) {
-  require_auth(get_self());
-
+ACTION daoinf::addentry(const hypha::Content & value) {
   hypha::Document dao_doc = get_dao_node();
+  hypha::Document * node_doc = &dao_doc;
+
+  hypha::ContentWrapper dao_cw = dao_doc.getContentWrapper();
+
+  name creator = dao_cw.getOrFail(FIXED_DETAILS, CREATOR) -> getAs<name>();
+
+  name auth = has_auth(creator) ? creator : get_self();
+  require_auth(auth);
 
   update_node(&dao_doc, VARIABLE_DETAILS, {
     value
   });
 }
 
-ACTION daoinf::editentry(const string & label, const hypha::Content & value) {
-  require_auth(get_self());
-
+ACTION daoinf::editentry(const hypha::Content & value) {
   hypha::Document dao_doc = get_dao_node();
+  hypha::Document * node_doc = &dao_doc;
+
+  hypha::ContentWrapper dao_cw = dao_doc.getContentWrapper();
+
+  name creator = dao_cw.getOrFail(FIXED_DETAILS, CREATOR) -> getAs<name>();
+
+  name auth = has_auth(creator) ? creator : get_self();
+  require_auth(auth);
 
   update_node(&dao_doc, VARIABLE_DETAILS, {
     value
@@ -80,17 +88,20 @@ ACTION daoinf::editentry(const string & label, const hypha::Content & value) {
 }
 
 ACTION daoinf::delentry(const string & label) {
-  require_auth(get_self());
-
   hypha::Document dao_doc = get_dao_node();
+  hypha::Document * node_doc = &dao_doc;
+
   hypha::ContentWrapper dao_cw = dao_doc.getContentWrapper();
 
-  hypha::Content * cont_to_del = dao_cw.getOrFail(VARIABLE_DETAILS, label, string("Content not found"));
+  name creator = dao_cw.getOrFail(FIXED_DETAILS, CREATOR) -> getAs<name>();
 
-  hypha::ContentWrapper.removeContent(VARIABLE_DETAILS, cont_to_del);
+  name auth = has_auth(creator) ? creator : get_self();
+  require_auth(auth);
+
+  dao_cw.removeContent(VARIABLE_DETAILS, label);
+
+  m_documentGraph.updateDocument(get_self(), node_doc -> getHash(), node_doc -> getContentGroups());
 }
-
-// Helpers
 
 void daoinf::update_node (hypha::Document * node_doc, const string & content_group_label, const std::vector<hypha::Content> & new_contents) {
   checksum256 old_node_hash = node_doc -> getHash();
@@ -118,4 +129,15 @@ hypha::Document daoinf::get_root_node () {
 
   hypha::Document root_doc(get_self(), root_itr -> getHash());
   return root_doc;
+}
+
+hypha::Document daoinf::get_doc_from_edge (const checksum256 & node_hash, const name & edge_name) {
+  std::vector<hypha::Edge> edges = m_documentGraph.getEdgesFromOrFail(node_hash, edge_name);
+  hypha::Document node_to(get_self(), edges[0].getToNode());
+  return node_to;
+}
+
+bool daoinf::edge_exists (const checksum256 & from_node_hash, const name & edge_name) {
+  std::vector<hypha::Edge> edges = m_documentGraph.getEdgesFrom(from_node_hash, edge_name);
+  return edges.size() > 0;
 }

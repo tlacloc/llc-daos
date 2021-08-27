@@ -3,8 +3,6 @@
 #include <eosio/system.hpp>
 #include <eosio/singleton.hpp>
 #include <contracts.hpp>
-// #include <tables/users.hpp>
-// #include <config.hpp>
 #include <util.hpp>
 #include <common.hpp>
 
@@ -28,18 +26,17 @@ CONTRACT daoinf : public contract {
     using contract::contract;
     daoinf(name receiver, name code, datastream<const char*> ds)
       : contract(receiver, code, ds)
-        // config(receiver, receiver.value)
         {}
     
     DECLARE_DOCUMENT_GRAPH(daoinf)
 
     ACTION reset();
 
-    ACTION initdao();
+    ACTION initdao(const name & creator);
 
-    ACTION addentry(const string & label, const hypha::Content & value);
+    ACTION addentry(const hypha::Content & value);
 
-    ACTION editentry(const string & label, const hypha::Content & value);
+    ACTION editentry(const hypha::Content & value);
 
     ACTION delentry(const string & label);
 
@@ -48,7 +45,9 @@ CONTRACT daoinf : public contract {
     int64_t active_cutoff_date();
     hypha::Document get_root_node();
     hypha::Document get_dao_node();
+    hypha::Document get_doc_from_edge(const checksum256 & node_hash, const name & edge_name);
     void update_node(hypha::Document * node_doc, const string & content_group_label, const std::vector<hypha::Content> & new_contents);
+    bool edge_exists(const checksum256 & from_node_hash, const name & edge_name);
 
     hypha::DocumentGraph m_documentGraph = hypha::DocumentGraph(get_self());
 };
@@ -56,21 +55,8 @@ CONTRACT daoinf : public contract {
 extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
   switch (action) {
     EOSIO_DISPATCH_HELPER(daoinf, (reset)
-      (initdao)(addentry)
-      // (updatecontent)
+      (initdao)
+      (addentry)(editentry)(delentry)
     )
   }
 }
-
-// extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
-//   if (action == name("transfer").value) {
-//       // execute_action<escrow>(name(receiver), name(code), &escrow::deposit);
-//   } else if (code == receiver) {
-//     switch (action) {
-//       EOSIO_DISPATCH_HELPER(daoinf,
-//         (reset)
-//         (updatecontent)
-//       )
-//     }
-//   }
-// }

@@ -37,19 +37,12 @@ async function initContract (account) {
       
       const data = {}
 
-      if (action.fields.length > 0 && arguments.length == 2 && typeof arguments[0] === 'object') {
-        for (let i = 0; i < action.fields.length; i++) {
-          const { name } = action.fields[i]
-          data[name] = arguments[0][name]
-        }
-      } else {
-        if ((action.fields.length + 1) != arguments.length) {
-          throw new Error(`Not enough arguments to call ${action.name} action in ${account} contract`)
-        }
-        for (let i = 0; i < action.fields.length; i++) {
-          const { name } = action.fields[i]
-          data[name] = arguments[i]
-        }
+      if ((action.fields.length + 1) != arguments.length) {
+        throw new Error(`Not enough arguments to call ${action.name} action in ${account} contract`)
+      }
+      for (let i = 0; i < action.fields.length; i++) {
+        const { name } = action.fields[i]
+        data[name] = arguments[i]
       }
 
       const nonce = getNonce() 
