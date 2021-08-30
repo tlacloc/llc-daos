@@ -21,6 +21,12 @@ CONTRACT daoreg : public contract {
 
     ACTION reset();
 
+    ACTION create(const name& dao, const name& creator, const std::string& ipfs); 
+
+    ACTION update(const name& dao, const std::string& ipfs);
+
+    ACTION delorg(const name& dao);
+
   private:
 
     DEFINE_CONFIG_TABLE
@@ -30,12 +36,26 @@ CONTRACT daoreg : public contract {
 
     config_tables config;
 
+    TABLE daos {
+      name dao;
+      name creator;
+      std::string ipfs;
+
+      auto primary_key () const { return dao.value; }
+      uint128_t by_creator_dao () const { return (uint128_t(creator.value) << 64)  + dao.value; }
+    };
+
+    typedef multi_index<name("daos"), daos, 
+      indexed_by<name("bycreatordao"),
+      const_mem_fun<daos, uint128_t, &daos::by_creator_dao>> 
+    >dao_table;
+
 };
 
 extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
   switch (action) {
-    EOSIO_DISPATCH_HELPER(daoreg,
-      (reset)
+      EOSIO_DISPATCH_HELPER(daoreg,
+      (reset)(create)(update)(delorg)
     )
   }
 }

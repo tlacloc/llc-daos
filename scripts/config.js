@@ -49,8 +49,6 @@ const publicKeysByChain = {
   [supportedChains.telosTestnet]: {
     owner: 'EOS8CiMM6Lqsahghzy7LSqxcRc67PG8n2gnjaTQ1ePG5nWwnqYWEm',
     active: 'EOS8CiMM6Lqsahghzy7LSqxcRc67PG8n2gnjaTQ1ePG5nWwnqYWEm'
-    // owner: 'EOS6PtkWLquhJYFxjU8mWTtg8eZWWjp39FQ2m3Xrceun9V8Z6fZNQ',
-    // active: 'EOS6PtkWLquhJYFxjU8mWTtg8eZWWjp39FQ2m3Xrceun9V8Z6fZNQ'
   },
   [supportedChains.telosMainnet]: {
 
