@@ -34,9 +34,7 @@ CONTRACT daoinf : public contract {
 
     ACTION initdao(const name & creator);
 
-    ACTION addentry(const hypha::Content & value);
-
-    ACTION editentry(const hypha::Content & value);
+    ACTION storeentry(const std::vector<hypha::Content> & values);
 
     ACTION delentry(const string & label);
 
@@ -56,7 +54,7 @@ extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
   switch (action) {
     EOSIO_DISPATCH_HELPER(daoinf, (reset)
       (initdao)
-      (addentry)(editentry)(delentry)
+      (storeentry)(delentry)
     )
   }
 }

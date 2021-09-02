@@ -9,7 +9,7 @@ const { setParamsValue } = require('../scripts/contract-settings')
 const { daoreg, daoinf } = contractNames
 const { firstuser, seconduser, thirduser, fourthuser } = daosAccounts
 
-describe('daos', async function () {
+describe('Dao registry', async function () {
 
   let contracts;
   let daosUsers;

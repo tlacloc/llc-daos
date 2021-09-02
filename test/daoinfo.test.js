@@ -80,12 +80,12 @@ describe('Dao info', async function () {
   it('Create new entry', async () => {
     await contracts.daoinf.initdao("edwintestnet", { authorization: `${daoinf}@active` })
 
-    const contentToCreate = {
+    const contentToCreate = [{
       "label": "allowed_account",
       "value": ["name", "edwintestnet"]
-    }
+    }]
 
-    await contracts.daoinf.addentry(contentToCreate, { authorization: `${creator}@active` }) // Creator auth
+    await contracts.daoinf.storeentry(contentToCreate, { authorization: `${creator}@active` }) // Creator auth
 
     const documentsTable = await rpc.get_table_rows({
       code: daoinf,
@@ -99,26 +99,26 @@ describe('Dao info', async function () {
 
     const foundContent = daoDocument.content_groups[1].find(el => el.label === 'allowed_account')
 
-    assert.deepStrictEqual(contentToCreate, foundContent)
+    assert.deepStrictEqual(contentToCreate[0], foundContent)
   })
 
   it('Update entry', async () => {
     await contracts.daoinf.initdao("edwintestnet", { authorization: `${daoinf}@active` })
 
 
-    const contentToCreate = {
+    const contentToCreate = [{
       "label": "allowed_account",
       "value": ["name", "edwintestnet"]
-    }
+    }]
 
-    await contracts.daoinf.addentry(contentToCreate, { authorization: `${daoinf}@active` })
+    await contracts.daoinf.storeentry(contentToCreate, { authorization: `${daoinf}@active` })
 
-    const contentToUpdate = {
+    const contentToUpdate = [{
       "label": "allowed_account",
       "value": ["name", "edwintestne1"]
-    }
+    }]
 
-    await contracts.daoinf.editentry(contentToUpdate, { authorization: `${daoinf}@active` })
+    await contracts.daoinf.storeentry(contentToUpdate, { authorization: `${daoinf}@active` })
 
 
     const documentsTable = await rpc.get_table_rows({
@@ -133,19 +133,19 @@ describe('Dao info', async function () {
 
     const foundContent = daoDocument.content_groups[1].find(el => el.label === 'allowed_account')
 
-    assert.deepStrictEqual(contentToUpdate, foundContent)
+    assert.deepStrictEqual(contentToUpdate[0], foundContent)
   })
 
   it('Delete entry', async () => {
     await contracts.daoinf.initdao("edwintestnet", { authorization: `${daoinf}@active` })
 
 
-    const contentToCreate = {
+    const contentToCreate = [{
       "label": "allowed_account",
       "value": ["name", "edwintestnet"]
-    }
+    }]
 
-    await contracts.daoinf.addentry(contentToCreate, { authorization: `${daoinf}@active` })
+    await contracts.daoinf.storeentry(contentToCreate, { authorization: `${daoinf}@active` })
 
     const documentsTableB = await rpc.get_table_rows({
       code: daoinf,
@@ -160,7 +160,7 @@ describe('Dao info', async function () {
     const foundContentB = daoDocumentB.content_groups[1].find(el => el.label === 'allowed_account')
 
     console.log('Entry exists before delete')
-    assert.deepStrictEqual(foundContentB, contentToCreate)
+    assert.deepStrictEqual(foundContentB, contentToCreate[0])
 
     await contracts.daoinf.delentry("allowed_account", { authorization: `${daoinf}@active` })
 
@@ -184,24 +184,21 @@ describe('Dao info', async function () {
     await contracts.daoinf.initdao("edwintestnet", { authorization: `${daoinf}@active` })
 
 
-    const contentToCreate1 = {
+    const contentToCreate1 = [{
       "label": "allowed_account",
       "value": ["name", "edwintestnet"]
-    }
-
-    const contentToCreate2 = {
+    },
+    {
       "label": "number_of_allowed",
       "value": ["int64", 10]
-    }
-
-    const contentToCreate3 = {
+    },
+    {
       "label": "city",
       "value": ["string", "New york"]
-    }
+    }]
 
-    await contracts.daoinf.addentry(contentToCreate1, { authorization: `${daoinf}@active` })
-    await contracts.daoinf.addentry(contentToCreate2, { authorization: `${daoinf}@active` })
-    await contracts.daoinf.addentry(contentToCreate3, { authorization: `${daoinf}@active` })
+
+    await contracts.daoinf.storeentry(contentToCreate1, { authorization: `${daoinf}@active` })
 
     const documentsTable = await rpc.get_table_rows({
       code: daoinf,
@@ -211,14 +208,14 @@ describe('Dao info', async function () {
       limit: 100
     })
 
-    const daoDocument = documentsTable.rows.find(el => el.id === 4)
+    const daoDocument = documentsTable.rows.find(el => el.id === 2)
 
     const foundContent1 = daoDocument.content_groups[1].find(el => el.label === 'allowed_account')
     const foundContent2 = daoDocument.content_groups[1].find(el => el.label === 'number_of_allowed')
     const foundContent3 = daoDocument.content_groups[1].find(el => el.label === 'city')
 
-    assert.deepStrictEqual(foundContent1, contentToCreate1)
-    assert.deepStrictEqual(foundContent2, contentToCreate2)
-    assert.deepStrictEqual(foundContent3, contentToCreate3)
+    assert.deepStrictEqual(foundContent1, contentToCreate1[0])
+    assert.deepStrictEqual(foundContent2, contentToCreate1[1])
+    assert.deepStrictEqual(foundContent3, contentToCreate1[2])
   })
 })

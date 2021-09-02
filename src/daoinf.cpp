@@ -55,7 +55,7 @@ ACTION daoinf::initdao(const name & creator) {
   hypha::Edge::write(get_self(), get_self(), dao_info_doc.getHash(), root_doc.getHash(), graph::OWNED_BY);
 }
 
-ACTION daoinf::addentry(const hypha::Content & value) {
+ACTION daoinf::storeentry(const std::vector<hypha::Content> & values) {
   hypha::Document dao_doc = get_dao_node();
   hypha::Document * node_doc = &dao_doc;
 
@@ -66,25 +66,7 @@ ACTION daoinf::addentry(const hypha::Content & value) {
   name auth = has_auth(creator) ? creator : get_self();
   require_auth(auth);
 
-  update_node(&dao_doc, VARIABLE_DETAILS, {
-    value
-  });
-}
-
-ACTION daoinf::editentry(const hypha::Content & value) {
-  hypha::Document dao_doc = get_dao_node();
-  hypha::Document * node_doc = &dao_doc;
-
-  hypha::ContentWrapper dao_cw = dao_doc.getContentWrapper();
-
-  name creator = dao_cw.getOrFail(FIXED_DETAILS, CREATOR) -> getAs<name>();
-
-  name auth = has_auth(creator) ? creator : get_self();
-  require_auth(auth);
-
-  update_node(&dao_doc, VARIABLE_DETAILS, {
-    value
-  });
+  update_node(&dao_doc, VARIABLE_DETAILS, values);
 }
 
 ACTION daoinf::delentry(const string & label) {
