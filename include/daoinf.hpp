@@ -36,7 +36,7 @@ CONTRACT daoinf : public contract {
 
     ACTION storeentry(const std::vector<hypha::Content> & values);
 
-    ACTION delentry(const string & label);
+    ACTION delentry(const std::vector<string> & labels);
 
   private:
 

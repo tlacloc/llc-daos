@@ -69,7 +69,7 @@ ACTION daoinf::storeentry(const std::vector<hypha::Content> & values) {
   update_node(&dao_doc, VARIABLE_DETAILS, values);
 }
 
-ACTION daoinf::delentry(const string & label) {
+ACTION daoinf::delentry(const std::vector<string> & labels) {
   hypha::Document dao_doc = get_dao_node();
   hypha::Document * node_doc = &dao_doc;
 
@@ -80,7 +80,13 @@ ACTION daoinf::delentry(const string & label) {
   name auth = has_auth(creator) ? creator : get_self();
   require_auth(auth);
 
-  dao_cw.removeContent(VARIABLE_DETAILS, label);
+  for (int i = 0; i < labels.size(); i++) {
+    if (labels[i] != VARIABLE_DETAILS) {
+      dao_cw.removeContent(VARIABLE_DETAILS, labels[i]);
+    } else {
+      check(false, "Cannot delete the variable details content");
+    }
+  }
 
   m_documentGraph.updateDocument(get_self(), node_doc -> getHash(), node_doc -> getContentGroups());
 }

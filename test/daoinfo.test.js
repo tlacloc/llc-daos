@@ -2,6 +2,7 @@ const assert = require('assert')
 const { rpc } = require('../scripts/eos')
 const { getContracts } = require('../scripts/eosio-util')
 const { contractNames, isLocalNode, sleep } = require('../scripts/config')
+const { AssertionError } = require('assert')
 
 const { daoinf, daoreg } = contractNames
 const creator = 'edwintestnet' // The creator should be able to sign transactions (Change it for chain existing account)
@@ -139,7 +140,6 @@ describe('Dao info', async function () {
   it('Delete entry', async () => {
     await contracts.daoinf.initdao("edwintestnet", { authorization: `${daoinf}@active` })
 
-
     const contentToCreate = [{
       "label": "allowed_account",
       "value": ["name", "edwintestnet"]
@@ -162,7 +162,7 @@ describe('Dao info', async function () {
     console.log('Entry exists before delete')
     assert.deepStrictEqual(foundContentB, contentToCreate[0])
 
-    await contracts.daoinf.delentry("allowed_account", { authorization: `${daoinf}@active` })
+    await contracts.daoinf.delentry(["allowed_account"], { authorization: `${daoinf}@active` })
 
     const documentsTable = await rpc.get_table_rows({
       code: daoinf,
@@ -178,6 +178,12 @@ describe('Dao info', async function () {
     
     console.log('Entry doesn\'t exists after delete')
     assert.deepStrictEqual(foundContent, undefined)
+
+    try {
+      await contracts.daoinf.delentry(["variable_details"], { authorization: `${daoinf}@active` })
+    } catch (error) {
+      assert.deepStrictEqual(error.message, "assertion failure with message: Cannot delete the variable details content")
+    }
   })
 
   it('Add many entries', async () => {
@@ -216,6 +222,47 @@ describe('Dao info', async function () {
 
     assert.deepStrictEqual(foundContent1, contentToCreate1[0])
     assert.deepStrictEqual(foundContent2, contentToCreate1[1])
+    assert.deepStrictEqual(foundContent3, contentToCreate1[2])
+  })
+
+  it('Delete many entries', async () => {
+    await contracts.daoinf.initdao("edwintestnet", { authorization: `${daoinf}@active` })
+
+
+    const contentToCreate1 = [{
+      "label": "allowed_account",
+      "value": ["name", "edwintestnet"]
+    },
+    {
+      "label": "number_of_allowed",
+      "value": ["int64", 10]
+    },
+    {
+      "label": "city",
+      "value": ["string", "New york"]
+    }]
+
+
+    await contracts.daoinf.storeentry(contentToCreate1, { authorization: `${daoinf}@active` })
+
+    await contracts.daoinf.delentry(["allowed_account", "number_of_allowed"], { authorization: `${daoinf}@active` })
+
+    const documentsTable = await rpc.get_table_rows({
+      code: daoinf,
+      scope: daoinf,
+      table: 'documents',
+      json: true,
+      limit: 100
+    })
+
+    const daoDocument = documentsTable.rows.find(el => el.id === 3)
+
+    const foundContent1 = daoDocument.content_groups[1].find(el => el.label === 'allowed_account')
+    const foundContent2 = daoDocument.content_groups[1].find(el => el.label === 'number_of_allowed')
+    const foundContent3 = daoDocument.content_groups[1].find(el => el.label === 'city')
+
+    assert.deepStrictEqual(foundContent1, undefined)
+    assert.deepStrictEqual(foundContent2, undefined)
     assert.deepStrictEqual(foundContent3, contentToCreate1[2])
   })
 })
