@@ -24,6 +24,12 @@ ACTION daoreg::create(const name& dao, const name& creator, const std::string& i
     new_org.ipfs = ipfs;
   });
 
+ action (
+         permission_level( get_self(), name("owner") ),
+         name("eosio"), 
+         name("buyrambytes"),
+         std::make_tuple(get_self(), get_self(), 1000) // buy 1kb of ram
+       ).send();
 }
 
 ACTION daoreg::update(const name& dao, const std::string& ipfs) {
