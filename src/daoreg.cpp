@@ -24,12 +24,25 @@ ACTION daoreg::create(const name& dao, const name& creator, const std::string& i
     new_org.ipfs = ipfs;
   });
 
- action (
-         permission_level( get_self(), name("owner") ),
+  uint64_t ram_bytes = config_get_uint64(name("b.rambytes"));
+
+  action (
+         permission_level( get_self(), name("active") ),
          name("eosio"), 
          name("buyrambytes"),
-         std::make_tuple(get_self(), get_self(), 1000) // buy 1kb of ram
-       ).send();
+         std::make_tuple(get_self(), dao, uint32_t(ram_bytes))
+  ).send();
+
+  asset del_amount_net = config_get_asset(name("d.net"));
+  asset del_amount_cpu = config_get_asset(name("d.cpu"));
+
+  action(
+        permission_level(get_self(), name("active")),
+        name("eosio"),
+        name("delegatebw"),
+        std::make_tuple(get_self(), dao, del_amount_net, del_amount_cpu, true)
+  ).send();
+  
 }
 
 ACTION daoreg::update(const name& dao, const std::string& ipfs) {
@@ -58,4 +71,42 @@ ACTION daoreg::delorg(const name& dao) {
 
   _dao.erase(daoit);
 
+}
+
+ACTION daoreg::setparam(name key, SettingsValues value, string description)
+{
+  auto citr = config.find(key.value);
+  if (citr == config.end())
+  {
+    config.emplace(_self, [&](auto & item){
+      item.key = key;
+      item.value = value;
+      if (description.length() > 0)
+      {
+        item.description = description;
+      }
+    });
+  }
+  else
+  {
+    config.modify(citr, _self, [&](auto & item){
+      item.value = value;
+      if (description.length() > 0)
+      {
+        item.description = description;
+      }
+    });
+  }
+}
+
+ACTION daoreg::resetsttngs()
+{
+
+  require_auth(get_self());
+  
+  auto citr = config.begin();
+  while (citr != config.end())
+  {
+    citr = config.erase(citr);
+  }
 }

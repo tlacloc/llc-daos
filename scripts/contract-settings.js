@@ -5,36 +5,36 @@ const { contractNames } = require('../scripts/config')
 const { daoreg, daoinf } = contractNames
 
 async function setParamsValue (test = false) {
-//   if (test) params = testparams
-//   const keys = Object.keys(params)
+  if (test) params = testparams
+  const keys = Object.keys(params)
 
-//   for (const key of keys) {
-//     await transact({
-//       actions: [{
-//         account: daos,
-//         name: 'setparam',
-//         authorization: [{
-//           actor: daos,
-//           permission: 'active',
-//         }],
-//         data: {
-//           key,
-//           ...params[key]
-//         }
-//       }]
-//     })
-//   }
+  for (const key of keys) {
+    await transact({
+      actions: [{
+        account: daoreg,
+        name: 'setparam',
+        authorization: [{
+          actor: daoreg,
+          permission: 'active',
+        }],
+        data: {
+          key,
+          ...params[key]
+        }
+      }]
+    })
+  }
 }
 
 async function getParams () {
-//   const res = await rpc.get_table_rows({
-//     code: daos,
-//     scope: daos,
-//     table: 'config',
-//     json: true,
-//     limit: 200
-//   })
-//   return res.rows
+  const res = await rpc.get_table_rows({
+    code: daoreg,
+    scope: daoreg,
+    table: 'config',
+    json: true,
+    limit: 200
+  })
+  return res.rows
 }
 
 module.exports = {

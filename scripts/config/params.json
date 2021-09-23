@@ -1,6 +1,14 @@
 {
-  "param": {
-    "value": ["uint64", 0],
-    "description": "Description of param"
+  "b.rambytes": {
+    "value": ["uint64", 950000],
+    "description": "RAM needed to store daoinf"
+  },
+  "d.cpu": {
+    "value": ["asset", "00.0000 TLOS"],
+    "description": "Delegated CPU"
+  },
+  "d.net": {
+    "value": ["asset", "00.0000 TLOS"],
+    "description": "Delegated NET"
   }
 }
