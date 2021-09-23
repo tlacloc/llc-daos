@@ -36,14 +36,13 @@ ACTION daoreg::create(const name& dao, const name& creator, const std::string& i
   asset del_amount_net = config_get_asset(name("d.net"));
   asset del_amount_cpu = config_get_asset(name("d.cpu"));
 
-  if(del_amount_net.amount > 0 && del_amount_cpu.amount > 0) {
-    action(
-          permission_level(get_self(), name("active")),
-          name("eosio"),
-          name("delegatebw"),
-          std::make_tuple(get_self(), dao, del_amount_net, del_amount_cpu, true)
-    ).send();
-  }
+  action(
+        permission_level(get_self(), name("active")),
+        name("eosio"),
+        name("delegatebw"),
+        std::make_tuple(get_self(), dao, del_amount_net, del_amount_cpu, true)
+  ).send();
+  
 }
 
 ACTION daoreg::update(const name& dao, const std::string& ipfs) {

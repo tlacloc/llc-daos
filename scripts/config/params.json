@@ -4,11 +4,11 @@
     "description": "RAM needed to store daoinf"
   },
   "d.cpu": {
-    "value": ["asset", "40.0000 TLOS"],
+    "value": ["asset", "00.0000 TLOS"],
     "description": "Delegated CPU"
   },
   "d.net": {
-    "value": ["asset", "40.0000 TLOS"],
+    "value": ["asset", "00.0000 TLOS"],
     "description": "Delegated NET"
   }
 }
