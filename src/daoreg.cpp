@@ -36,7 +36,7 @@ ACTION daoreg::create(const name& dao, const name& creator, const std::string& i
   asset del_amount_net = config_get_asset(name("d.net"));
   asset del_amount_cpu = config_get_asset(name("d.cpu"));
 
-  if(del_amount_net.amount > 0 && del_amount_cpu > 0) {
+  if(del_amount_net.amount > 0 && del_amount_cpu.amount > 0) {
     action(
           permission_level(get_self(), name("active")),
           name("eosio"),
