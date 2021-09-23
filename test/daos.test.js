@@ -29,6 +29,20 @@ describe('Dao registry', async function () {
     await contracts.daoreg.reset({ authorization: `${daoreg}@active` })
   })
 
+  it('Settings, set a new param', async function () {
+    await contracts.daoreg.setparam('testparam', ['uint64', 20], 'test param', { authorization: `${daoreg}@active` })
+
+    const settingsParam = await rpc.get_table_rows({
+      code: daoreg,
+      scope: daoreg,
+      table: 'config',
+      json: true,
+      limit: 100
+    })
+
+    console.log(JSON.stringify(settingsParam, null, 2))
+  })
+
   it('Create dao', async () => {
     await contracts.daoreg.create('org1', daoreg, 'HASH', { authorization: `${daoreg}@active` })
     // await contracts.daoreg.create('org2', firstuser, 'HASH', { authorization: `${firstuser}@active` })
@@ -82,9 +96,14 @@ describe('Dao registry', async function () {
         throwError: true
       })
     }
+
+    //delete dao
+    await contracts.daoreg.delorg('org1', { authorization: `${daoreg}@active` })
   })
 
-  await contracts.daoreg.delorg('org1', { authorization: `${daoreg}@active` })
+  it('Reset settings', async function() {
+    await contracts.daoreg.resetsttngs({ authorization: `${daoreg}@active` })
+  })
 
 })
 

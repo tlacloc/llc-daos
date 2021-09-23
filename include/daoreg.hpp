@@ -27,6 +27,11 @@ CONTRACT daoreg : public contract {
 
     ACTION delorg(const name& dao);
 
+    ACTION setparam(name key, SettingsValues value, string description); 
+
+    ACTION resetsttngs();
+
+
   private:
 
     DEFINE_CONFIG_TABLE
@@ -55,7 +60,7 @@ CONTRACT daoreg : public contract {
 extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
   switch (action) {
       EOSIO_DISPATCH_HELPER(daoreg,
-      (reset)(create)(update)(delorg)
+      (reset)(create)(update)(delorg)(setparam)(resetsttngs)
     )
   }
 }
