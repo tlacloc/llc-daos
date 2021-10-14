@@ -16,7 +16,7 @@ namespace graph {
   static constexpr name OWNS_DAO_INFO = name("owndaoinform");
   static constexpr name OWNED_BY = name("ownedby");
   static constexpr name HAS_DAOS = name("hasdaos");
-  static constexpr name HAS_DAOS = name("daos");
+  static constexpr name DAOS = name("daos");
 
   #define NOT_FOUND -1
 

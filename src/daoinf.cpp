@@ -68,8 +68,8 @@ ACTION daoinf::initdao(const name & creator, const uint64_t & dao_id) {
   hypha::Edge::write(get_self(), get_self(), dao_info_doc.getHash(), daos_doc.getHash(), graph::DAOS);
 }
 
-ACTION daoinf::adddao(const name & creator, const uint64_t & dao_id){
-  require_auth(get_self());
+ACTION daoinf::adddao(const checksum256 & daos_doc_hash, const name & creator, const uint64_t & dao_id) {
+  require_auth( has_auth(creator) ? creator : get_self() );
 
   // creates the dao info node
   hypha::ContentGroups dao_info_cgs {
@@ -86,8 +86,8 @@ ACTION daoinf::adddao(const name & creator, const uint64_t & dao_id){
 
   hypha::Document dao_info_doc(get_self(), get_self(), std::move(dao_info_cgs));
 
-  hypha::Edge::write(get_self(), get_self(), dao_info_doc.getHash(), daos_doc.getHash(), name(dao_id));
-  hypha::Edge::write(get_self(), get_self(), dao_info_doc.getHash(), daos_doc.getHash(), graph::DAOS);
+  hypha::Edge::write(get_self(), get_self(), dao_info_doc.getHash(), daos_doc_hash, name(dao_id));
+  hypha::Edge::write(get_self(), get_self(), dao_info_doc.getHash(), daos_doc_hash, graph::DAOS);
 
 }
 
