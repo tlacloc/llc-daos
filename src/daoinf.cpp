@@ -40,7 +40,7 @@ ACTION daoinf::initdao(const name & creator, const uint64_t & dao_id) {
   hypha::ContentGroup daos {
     hypha::ContentGroup {
       hypha::Content(hypha::CONTENT_GROUP_LABEL, FIXED_DETAILS),
-      hypha::Content(TYPE, graph::DAOS),
+      hypha::Content(TYPE, graph::DAOS_NODE),
       hypha::Content(OWNER, get_self())
     }
   };
@@ -65,6 +65,30 @@ ACTION daoinf::initdao(const name & creator, const uint64_t & dao_id) {
   hypha::Edge::write(get_self(), get_self(), root_doc.getHash(), daos_doc.getHash(), graph::OWNS_DAO_INFO);
   hypha::Edge::write(get_self(), get_self(), daos_doc.getHash(), dao_info_doc.getHash(), graph::HAS_DAOS);
   hypha::Edge::write(get_self(), get_self(), dao_info_doc.getHash(), daos_doc.getHash(), name(dao_id));
+  hypha::Edge::write(get_self(), get_self(), dao_info_doc.getHash(), daos_doc.getHash(), graph::DAOS);
+}
+
+ACTION daoinf::adddao(const name & creator, const uint64_t & dao_id){
+  require_auth(get_self());
+
+  // creates the dao info node
+  hypha::ContentGroups dao_info_cgs {
+    hypha::ContentGroup {
+      hypha::Content(hypha::CONTENT_GROUP_LABEL, FIXED_DETAILS),
+      hypha::Content(CREATOR, creator),
+      hypha::Content(OWNER, get_self())
+    },
+    hypha::ContentGroup {
+      hypha::Content(hypha::CONTENT_GROUP_LABEL, VARIABLE_DETAILS),
+      hypha::Content(OWNER, get_self())
+    }
+  };
+
+  hypha::Document dao_info_doc(get_self(), get_self(), std::move(dao_info_cgs));
+
+  hypha::Edge::write(get_self(), get_self(), dao_info_doc.getHash(), daos_doc.getHash(), name(dao_id));
+  hypha::Edge::write(get_self(), get_self(), dao_info_doc.getHash(), daos_doc.getHash(), graph::DAOS);
+
 }
 
 ACTION daoinf::storeentry(const std::vector<hypha::Content> & values, const uint64_t &dao_id) {

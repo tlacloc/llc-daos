@@ -8,7 +8,7 @@ namespace graph {
 
   // document type
   static constexpr name ROOT = name("root");
-  static constexpr name DAOS = name("daos");
+  static constexpr name DAOS_NODE = name("daosnode");
   static constexpr name DAO_INFO = name("daoinfo");
 
   // graph edges
@@ -16,6 +16,7 @@ namespace graph {
   static constexpr name OWNS_DAO_INFO = name("owndaoinform");
   static constexpr name OWNED_BY = name("ownedby");
   static constexpr name HAS_DAOS = name("hasdaos");
+  static constexpr name HAS_DAOS = name("daos");
 
   #define NOT_FOUND -1
 
