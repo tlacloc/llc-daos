@@ -5,7 +5,7 @@ const { daosAccounts } = require('../scripts/daos-util')
 const { assertError } = require('../scripts/eosio-errors')
 const { contractNames, isLocalNode, sleep } = require('../scripts/config')
 const { setParamsValue } = require('../scripts/contract-settings')
-const { AssertionError } = require('assert/strict')
+const { AssertionError } = require('assert')
 
 const { daoreg, daoinf } = contractNames
 const { firstuser, seconduser, thirduser, fourthuser } = daosAccounts
