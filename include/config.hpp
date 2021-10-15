@@ -5,11 +5,11 @@
 using eosio::name;
 using std::string;
 
-typedef std::variant<std::monostate, uint64_t, int64_t, double, name, asset, string> SettingsValues;
+typedef std::variant<std::monostate, uint64_t, int64_t, double, name, asset, string> VariantValue;
 
 #define DEFINE_CONFIG_TABLE TABLE config_table { \
       name key; \
-      SettingsValues value; \
+      VariantValue value; \
       string description; \
 \
       uint64_t primary_key () const { return key.value; } \
