@@ -44,6 +44,8 @@ describe('Dao registry', async function(){
             limit: 100
         })
         console.log(JSON.stringify(settingParam, null, 2))
+
+        // aqui tambien asserts
     })
 
     it('Create DAO', async function(){
@@ -54,12 +56,14 @@ describe('Dao registry', async function(){
             {authorization: `${daoreg}@active`}
         )
 
+        let daoCreation = true;
         try{await contracts.daoreg.create(
             'dao.org2',
             firstuser,
             'HASH_2',
-            {authorization: `${daoinf}@active`}
-        )} catch (error){
+            {authorization: `${daoinf}@active`})
+        daoCreation = false
+        } catch (error){
             assertError({
                 error,
                 textInside:`missing authority of testuseraaa`,
@@ -67,9 +71,30 @@ describe('Dao registry', async function(){
                 throwError: true
             })
         }
+
+        const dao_table = await rpc.get_table_rows({
+            code: daoreg,
+            scope: daoreg,
+            table: 'daos',
+            json: true,
+            limit: 100
+        })
+
+        assert.deepStrictEqual(dao_table.rows, [
+            {
+                dao_id: 0,
+                dao: 'dao.org1',
+                creator: daoreg,
+                ipfs: 'HASH_1',
+                attributes: [],
+                tokens: []
+            }
+        ])
+
+        assert.deepStrictEqual(daoCreation, true)
     })
 
-    it('Update DAO', async function(){
+    it('Update IPFS DAO', async function(){
         // create DAO
         await contracts.daoreg.create(
             'dao.org1',
@@ -86,12 +111,13 @@ describe('Dao registry', async function(){
         )
         
         // DAO cannot be updated by someone else
+        let updateIpfsOnlyOwner = true
         try {
             await contracts.daoreg.update(
                 0,
                 'NEW_HASH_2',
-                {authorization: `${daoinf}@active`}
-            )
+                {authorization: `${daoinf}@active`})
+            updateIpfsOnlyOwner = false
         } catch (error) {
             assertError({
                 error,
@@ -102,12 +128,13 @@ describe('Dao registry', async function(){
         }
 
         // Fails if DAO is not found
+        let updateIpfsIfFound = true
         try {
             await contracts.daoreg.update(
                 1,
                 'NEW_HASH3',
-                {authorization: `${daoreg}@active`}
-            )
+                {authorization: `${daoreg}@active`})
+            updateIpfsIfFound = false
         } catch (error) {
             assertError({
                 error,
@@ -116,6 +143,28 @@ describe('Dao registry', async function(){
                 throwError: true
             })
         }
+
+        const dao_table = await rpc.get_table_rows({
+            code: daoreg,
+            scope: daoreg,
+            table: 'daos',
+            json: true,
+            limit: 100
+        })
+
+        assert.deepStrictEqual(dao_table.rows, [
+            {
+                dao_id: 0,
+                dao: 'dao.org1',
+                creator: daoreg,
+                ipfs: 'NEW_HASH_1',
+                attributes: [],
+                tokens: []
+            }
+        ])
+
+        assert.deepStrictEqual(updateIpfsOnlyOwner, true)
+        assert.deepStrictEqual(updateIpfsIfFound, true)
     })
 
     it('Delete DAO', async function(){

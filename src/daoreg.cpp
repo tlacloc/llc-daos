@@ -25,7 +25,7 @@ ACTION daoreg::create(const name& dao, const name& creator, const std::string& i
     new_org.ipfs = ipfs;
   });
 
-  if (is_account(creator)) {
+  if (is_account(dao)) {
     uint64_t ram_bytes = config_get_uint64(name("b.rambytes"));
 
     if (ram_bytes > 0) {
