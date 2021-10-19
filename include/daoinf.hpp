@@ -34,7 +34,7 @@ CONTRACT daoinf : public contract {
 
     ACTION initdao(const name & creator, const uint64_t & dao_id);
 
-    ACTION adddao(const checksum256 & daos_doc_hash, const name & creator, const uint64_t & dao_id) ;
+    ACTION adddao(const name & creator, const uint64_t & dao_id) ;
 
     ACTION storeentry(const std::vector<hypha::Content> & values, const uint64_t &dao_id);
 
@@ -44,7 +44,8 @@ CONTRACT daoinf : public contract {
 
     int64_t active_cutoff_date();
     hypha::Document get_root_node();
-    hypha::Document get_dao_node(const uint64_t& dao_id);
+    hypha::Document get_dao_node();
+    hypha::Document get_dao_inf_node(const uint64_t & dao_id);
     hypha::Document get_doc_from_edge(const checksum256 & node_hash, const name & edge_name);
     void update_node(hypha::Document * node_doc, const string & content_group_label, const std::vector<hypha::Content> & new_contents);
     bool edge_exists(const checksum256 & from_node_hash, const name & edge_name);

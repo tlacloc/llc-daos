@@ -25,7 +25,7 @@ describe('Dao info', async function () {
   })
 
   it('Create root node and dao node', async () => {
-    await contracts.daoinf.initdao("edwintestnet", { authorization: `${daoinf}@active` })
+    await contracts.daoinf.initdao("edwintestnet", 1,{ authorization: `${daoinf}@active` })
 
     const documentTable = await rpc.get_table_rows({
       code: daoinf,
@@ -45,26 +45,10 @@ describe('Dao info', async function () {
           ]
         },
         {
-          "label": "creator",
+          "label": "type",
           "value": [
             "name",
-            "edwintestnet"
-          ]
-        },
-        {
-          "label": "owner",
-          "value": [
-            "name",
-            "daoinfor1111"
-          ]
-        }
-      ],
-      [
-        {
-          "label": "content_group_label",
-          "value": [
-            "string",
-            "variable_details"
+            "daosnode"
           ]
         },
         {
@@ -78,17 +62,13 @@ describe('Dao info', async function () {
     ])
   })
 
-  it('Create new entry', async () => {
-    await contracts.daoinf.initdao("edwintestnet", { authorization: `${daoinf}@active` })
+  it('Create new dao', async () => {
 
-    const contentToCreate = [{
-      "label": "allowed_account",
-      "value": ["name", "edwintestnet"]
-    }]
+    await contracts.daoinf.initdao("edwintestnet", 1,{ authorization: `${daoinf}@active` })
 
-    await contracts.daoinf.storeentry(contentToCreate, { authorization: `${creator}@active` }) // Creator auth
+    await contracts.daoinf.adddao("newdao", 2,{ authorization: `${daoinf}@active` })
 
-    const documentsTable = await rpc.get_table_rows({
+    const documentTable = await rpc.get_table_rows({
       code: daoinf,
       scope: daoinf,
       table: 'documents',
@@ -96,15 +76,77 @@ describe('Dao info', async function () {
       limit: 100
     })
 
-    const daoDocument = documentsTable.rows.find(el => el.id === 2)
+    console.log(documentTable.rows[3].content_groups)
 
-    const foundContent = daoDocument.content_groups[1].find(el => el.label === 'allowed_account')
+    assert.deepStrictEqual(documentTable.rows[3].content_groups, [
+      [
+        {
+          "label": "content_group_label",
+          "value": [
+            "string",
+            "fixed_details"
+          ]
+        },
+        {
+          "label": "creator",
+          "value": [
+            "name",
+            "newdao"
+          ]
+        },
+        {
+          "label": "owner",
+          "value": [
+            "name",
+            "daoinfor1111"
+          ]
+        }
+      ],
+      [
+        { 
+          "label": "content_group_label",
+          "value": [
+              "string",
+              "variable_details"
+          ]
+        },
+        { 
+          "label": "owner",
+          "value": [
+              "name",
+              "daoinfor1111"
+          ]
+        }
+      ]
+    ])
 
+  })
+
+  it('Create new entry', async () => {
+    await contracts.daoinf.initdao("edwintestnet", 1,{ authorization: `${daoinf}@active` })
+
+    const contentToCreate = [{
+      "label": "allowed_account",
+      "value": ["name", "edwintestnet"]
+    }]
+
+    await contracts.daoinf.storeentry(contentToCreate, 1,{ authorization: `${creator}@active` }) // Creator auth
+
+    const documentTable = await rpc.get_table_rows({
+      code: daoinf,
+      scope: daoinf,
+      table: 'documents',
+      json: true,
+      limit: 100
+    })
+
+    const foundContent = documentTable.rows[2].content_groups[1][2]
     assert.deepStrictEqual(contentToCreate[0], foundContent)
+
   })
 
   it('Update entry', async () => {
-    await contracts.daoinf.initdao("edwintestnet", { authorization: `${daoinf}@active` })
+    await contracts.daoinf.initdao("edwintestnet", 1, { authorization: `${daoinf}@active` })
 
 
     const contentToCreate = [{
@@ -112,14 +154,14 @@ describe('Dao info', async function () {
       "value": ["name", "edwintestnet"]
     }]
 
-    await contracts.daoinf.storeentry(contentToCreate, { authorization: `${daoinf}@active` })
+    await contracts.daoinf.storeentry(contentToCreate, 1, { authorization: `${daoinf}@active` })
 
     const contentToUpdate = [{
       "label": "allowed_account",
       "value": ["name", "edwintestne1"]
     }]
 
-    await contracts.daoinf.storeentry(contentToUpdate, { authorization: `${daoinf}@active` })
+    await contracts.daoinf.storeentry(contentToUpdate, 1, { authorization: `${daoinf}@active` })
 
 
     const documentsTable = await rpc.get_table_rows({
