@@ -5,7 +5,7 @@ const { daosAccounts } = require('../scripts/daos-util')
 const { assertError } = require('../scripts/eosio-errors')
 const { contractNames, isLocalNode, sleep } = require('../scripts/config')
 const { setParamsValue } = require('../scripts/contract-settings')
-const { AssertionError } = require('assert/strict')
+const { AssertionError } = require('assert')
 
 const { daoreg, daoinf } = contractNames
 const { firstuser, seconduser, thirduser, fourthuser } = daosAccounts
@@ -93,6 +93,34 @@ describe('Dao registry', async function () {
         ])
 
         assert.deepStrictEqual(daoCreation, true)
+    })
+
+    it('Create DAO', async function () {
+        await contracts.daoreg.create(
+            'dao.org1',
+            daoreg,
+            'HASH_1',
+            { authorization: `${daoreg}@active` }
+        )
+
+        let daoCreatedTwice = false;
+        try {
+            await contracts.daoreg.create(
+                'dao.org1',
+                daoreg,
+                'HASH_2',
+                { authorization: `${daoreg}@active` })
+            daoCreatedTwice = true
+        } catch (error) {
+            assertError({
+                error,
+                textInside: `dao with same name already registered`,
+                message: 'can not create dao with same name (expected)',
+                throwError: true
+            })
+        }
+
+        assert.deepStrictEqual(daoCreatedTwice, false)
     })
 
     it('Update IPFS DAO', async function () {
