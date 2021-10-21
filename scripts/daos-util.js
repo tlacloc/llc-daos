@@ -34,7 +34,7 @@ async function createDevelopAccounts (account) {
 
 async function developAccounts () {
   for (var account in daosAccounts) {
-    await createDevelopAccounts(account)
+    await createDevelopAccounts(daosAccounts[account])
   }
 }
 
