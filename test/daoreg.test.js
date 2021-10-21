@@ -95,7 +95,7 @@ describe('Dao registry', async function () {
         assert.deepStrictEqual(daoCreation, true)
     })
 
-    it('Create DAO', async function () {
+    it('Create another DAO with same name', async function () {
         await contracts.daoreg.create(
             'dao.org1',
             daoreg,
