@@ -21,10 +21,6 @@ ACTION daoinf::reset () {
   while (eitr != e_t.end()) {
     eitr = e_t.erase(eitr);
   }
-}
-
-ACTION daoinf::initdao(const name & creator, const uint64_t & dao_id) {
-  require_auth(get_self());
 
   // creates the root node
   hypha::ContentGroups root_cgs {
@@ -44,27 +40,16 @@ ACTION daoinf::initdao(const name & creator, const uint64_t & dao_id) {
     }
   };
 
-  // creates the dao info node
-  hypha::ContentGroups dao_info_cgs {
-    hypha::ContentGroup {
-      hypha::Content(hypha::CONTENT_GROUP_LABEL, FIXED_DETAILS),
-      hypha::Content(CREATOR, creator),
-      hypha::Content(OWNER, get_self())
-    },
-    hypha::ContentGroup {
-      hypha::Content(hypha::CONTENT_GROUP_LABEL, VARIABLE_DETAILS),
-      hypha::Content(OWNER, get_self())
-    }
-  };
-
   hypha::Document root_doc(get_self(), get_self(), std::move(root_cgs));
   hypha::Document daos_doc(get_self(), get_self(), std::move(daos));
-  hypha::Document dao_info_doc(get_self(), get_self(), std::move(dao_info_cgs));
 
   hypha::Edge::write(get_self(), get_self(), root_doc.getHash(), daos_doc.getHash(), graph::HAS_DAOS);
 
-  hypha::Edge::write(get_self(), get_self(), daos_doc.getHash(), dao_info_doc.getHash(), name(dao_id));
-  hypha::Edge::write(get_self(), get_self(), daos_doc.getHash(), dao_info_doc.getHash(), graph::DAOS);
+}
+
+ACTION daoinf::initdao() {
+  require_auth(get_self());
+
 }
 
 ACTION daoinf::adddao(const name & creator, const uint64_t & dao_id) {

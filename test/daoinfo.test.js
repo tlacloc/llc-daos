@@ -25,7 +25,7 @@ describe('Dao info', async function () {
   })
 
   it('Create root node and dao node', async () => {
-    await contracts.daoinf.initdao("edwintestnet", 1,{ authorization: `${daoinf}@active` })
+    await contracts.daoinf.adddao("edwintestnet", 1,{ authorization: `${daoinf}@active` })
 
     const documentTable = await rpc.get_table_rows({
       code: daoinf,
@@ -63,7 +63,7 @@ describe('Dao info', async function () {
   })
 
   it('Create new entry', async () => {
-    await contracts.daoinf.initdao("edwintestnet", 1,{ authorization: `${daoinf}@active` })
+    await contracts.daoinf.adddao("edwintestnet", 1,{ authorization: `${daoinf}@active` })
 
     const contentToCreate = [{
       "label": "allowed_account",
@@ -90,7 +90,7 @@ describe('Dao info', async function () {
   })
 
   it('Update entry', async () => {
-    await contracts.daoinf.initdao("edwintestnet", 1, { authorization: `${daoinf}@active` })
+    await contracts.daoinf.adddao("edwintestnet", 1, { authorization: `${daoinf}@active` })
 
 
     const contentToCreate = [{
@@ -124,7 +124,7 @@ describe('Dao info', async function () {
   })
 
   it('Delete entry', async () => {
-    await contracts.daoinf.initdao("edwintestnet", 1, { authorization: `${daoinf}@active` })
+    await contracts.daoinf.adddao("edwintestnet", 1, { authorization: `${daoinf}@active` })
 
     const contentToCreate = [{
       "label": "allowed_account",
@@ -173,7 +173,7 @@ describe('Dao info', async function () {
   })
 
   it('Add many entries', async () => {
-    await contracts.daoinf.initdao("edwintestnet", 1, { authorization: `${daoinf}@active` })
+    await contracts.daoinf.adddao("edwintestnet", 1, { authorization: `${daoinf}@active` })
 
 
     const contentToCreate1 = [{
@@ -212,7 +212,7 @@ describe('Dao info', async function () {
   })
 
   it('Delete many entries', async () => {
-    await contracts.daoinf.initdao("edwintestnet", 1, { authorization: `${daoinf}@active` })
+    await contracts.daoinf.adddao("edwintestnet", 1, { authorization: `${daoinf}@active` })
 
 
     const contentToCreate1 = [{
@@ -254,7 +254,7 @@ describe('Dao info', async function () {
 
   it('Create new dao', async () => {
 
-    await contracts.daoinf.initdao("edwintestnet", 1,{ authorization: `${daoinf}@active` })
+    await contracts.daoinf.adddao("edwintestnet", 1,{ authorization: `${daoinf}@active` })
 
     await contracts.daoinf.adddao("newdao", 2,{ authorization: `${daoinf}@active` })
 
@@ -313,7 +313,7 @@ describe('Dao info', async function () {
   })
 
   it('Create new entry in other dao', async () => {
-    await contracts.daoinf.initdao("edwintestnet", 1,{ authorization: `${daoinf}@active` })
+    await contracts.daoinf.adddao("edwintestnet", 1,{ authorization: `${daoinf}@active` })
     await contracts.daoinf.adddao("newdao", 2,{ authorization: `${daoinf}@active` })
 
     const contentToCreate = [{
@@ -341,7 +341,7 @@ describe('Dao info', async function () {
   })
 
   it('Update entry in other dao', async () => {
-    await contracts.daoinf.initdao("edwintestnet", 1, { authorization: `${daoinf}@active` })
+    await contracts.daoinf.adddao("edwintestnet", 1, { authorization: `${daoinf}@active` })
     await contracts.daoinf.adddao("newdao", 2,{ authorization: `${daoinf}@active` })
 
     const contentToCreate = [{
@@ -375,7 +375,7 @@ describe('Dao info', async function () {
   })
 
   it('Delete entry in other dao', async () => {
-    await contracts.daoinf.initdao("edwintestnet", 1, { authorization: `${daoinf}@active` })
+    await contracts.daoinf.adddao("edwintestnet", 1, { authorization: `${daoinf}@active` })
     await contracts.daoinf.adddao("newdao", 2,{ authorization: `${daoinf}@active` })
 
     const contentToCreate = [{
@@ -427,7 +427,7 @@ describe('Dao info', async function () {
   })
 
   it('Add many entries in other dao', async () => {
-    await contracts.daoinf.initdao("edwintestnet", 1, { authorization: `${daoinf}@active` })
+    await contracts.daoinf.adddao("edwintestnet", 1, { authorization: `${daoinf}@active` })
 
 
     const contentToCreate1 = [{
@@ -466,7 +466,7 @@ describe('Dao info', async function () {
   })
 
   it('Delete many entries in other dao', async () => {
-    await contracts.daoinf.initdao("edwintestnet", 1, { authorization: `${daoinf}@active` })
+    await contracts.daoinf.adddao("edwintestnet", 1, { authorization: `${daoinf}@active` })
     await contracts.daoinf.adddao("newdao", 2,{ authorization: `${daoinf}@active` })
 
     const contentToCreate1 = [{

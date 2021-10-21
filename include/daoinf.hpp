@@ -32,7 +32,7 @@ CONTRACT daoinf : public contract {
 
     ACTION reset();
 
-    ACTION initdao(const name & creator, const uint64_t & dao_id);
+    ACTION initdao();
 
     ACTION adddao(const name & creator, const uint64_t & dao_id) ;
 
