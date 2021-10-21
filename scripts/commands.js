@@ -4,6 +4,7 @@ const { createAccount, deployContract } = require('./deploy')
 const { accountExists, contractRunningSameCode } = require('./eosio-errors')
 const { setParamsValue } = require('./contract-settings')
 const { updatePermissions } = require('./permissions')
+const { developAccounts } = require("./daos-util")
 const prompt = require('prompt-sync')()
 
 
@@ -59,6 +60,11 @@ async function init () {
   console.log('SETTING CONTRACTS PARAMETERS\n')
   await setParamsValue()
   console.log('setting parameters finished\n\n')
+
+  if(isLocalNode) {
+    console.log("CREATING TEST ACCOUNTS")
+    await developAccounts()
+  }
 
 }
 
