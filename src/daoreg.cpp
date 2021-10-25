@@ -24,6 +24,7 @@ ACTION daoreg::create(const name& dao, const name& creator, const std::string& i
 
   _dao.emplace(get_self(), [&](auto& new_org){
     uint64_t dao_id = _dao.available_primary_key();
+    dao_id = dao_id == 0 ? 1 : dao_id;
     new_org.dao_id = dao_id;
     new_org.dao = dao;
     new_org.creator = creator;
@@ -31,7 +32,7 @@ ACTION daoreg::create(const name& dao, const name& creator, const std::string& i
   });
 
   if (is_account(dao)) {
-    
+
     uint64_t ram_bytes = config_get_uint64(name("b.rambytes"));
 
     if (ram_bytes > 0) {
