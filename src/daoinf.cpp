@@ -47,11 +47,6 @@ ACTION daoinf::reset () {
 
 }
 
-ACTION daoinf::initdao() {
-  require_auth(get_self());
-
-}
-
 ACTION daoinf::adddao(const name & creator, const uint64_t & dao_id) {
   require_auth( has_auth(creator) ? creator : get_self() );
 
