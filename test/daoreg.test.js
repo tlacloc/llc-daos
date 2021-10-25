@@ -1,14 +1,35 @@
 const assert = require('assert')
 const { rpc } = require('../scripts/eos')
-const { getContracts, getAccountBalance } = require('../scripts/eosio-util')
+const { getContracts, getAccountBalance, initContract, randomAccountName } = require('../scripts/eosio-util')
 const { daosAccounts } = require('../scripts/daos-util')
 const { assertError } = require('../scripts/eosio-errors')
 const { contractNames, isLocalNode, sleep } = require('../scripts/config')
 const { setParamsValue } = require('../scripts/contract-settings')
 const { AssertionError } = require('assert/strict')
+const { createAccount, deployContract } = require('../scripts/deploy')
 
-const { daoreg, daoinf } = contractNames
+const { daoreg, daoinf, tlostoken } = contractNames
 const { firstuser, seconduser, thirduser, fourthuser } = daosAccounts
+
+async function createTokenContract() {
+    const account = randomAccountName()
+    await createAccount(account)
+    await deployContract({
+        name: 'tlostoken',
+        nameOnChain: account
+    })
+    const token_contract = await initContract(account)
+    return [ token_contract, account ]
+}
+
+async function createToken(token_contract, account, issuer, max_supply, quantity_issue, quantity_transfer) {
+    
+    await token_contract.create(issuer, max_supply, {authorization: `${account}@active`})
+    await token_contract.issue(issuer, quantity_issue, '')
+    await token_contract.transfer(issuer, firstuser, quantity_transfer, '', `${issuer}@active`)
+    await token_contract.transfer(issuer, seconduser, quantity_transfer, '', `${issuer}@active`)
+    await token_contract.transfer(issuer, thirduser, quantity_transfer, '', `${issuer}@active`)
+}
 
 describe('Dao registry', async function () {
     let contracts;
@@ -19,7 +40,7 @@ describe('Dao registry', async function () {
             console.log('These test should only be run on local node')
             process.exit(1)
         }
-        contracts = await getContracts([daoreg])
+        contracts = await getContracts([daoreg, tlostoken]) // ??
         daousers = [firstuser, seconduser, thirduser]
         await setParamsValue()
     })
@@ -281,7 +302,7 @@ describe('Dao registry', async function () {
             0,
             [
                 { first: "first attribute", second: ['uint64', 001] },
-                { first: "second attribute", second: ['string', 'DAOO'] },
+                { first: "second attribute", second: ['string', 'DAOO'] }
             ],
             { authorization: `${daoreg}@active` }
         )
@@ -560,5 +581,64 @@ describe('Dao registry', async function () {
 
         assert.deepStrictEqual(dao_table.rows, [])
         assert.deepStrictEqual(resetByDaoreg, true)
+    })
+
+    it('Accepts deposits correctly', async function () {
+        // create DAO
+        await contracts.daoreg.create(
+            'dao.org1',
+            daoreg,
+            'HASH_1',
+            { authorization: `${daoreg}@active` }
+        )
+        // create token1 contract and account
+        const [token1_contract, account1] = await createTokenContract();
+        // create, issue and tranfer token1 to users
+        await createToken(
+            token1_contract, 
+            account1, 
+            issuer, //??
+            "10000.0000 DTK", 
+            "4000.0000 DTK", 
+            "1000.0000 DTK"
+        )
+        // create token2 contract and account
+        const [token2_contract, account2] = await createTokenContract();
+        // create, issue and tranfer token2 to users
+        await createToken(
+            token2_contract,
+            account2,
+            issuer, //??
+            "10000.0000 BTK",
+            "4000.0000 BTK",
+            "1000.0000 BTK"
+        )
+        // add token1 from random account
+        await contracts.daoreg.addtoken(
+            0,
+            'token_contract',
+            `4,DTK`,
+            { authorization: `${daoreg}@active` }
+        )
+        // add system token, ?? en seed esto es diferente -> transfer 
+        await contracts.tlostoken.create()
+        await contracts.tlostoken.issue()
+        await contracts.tlostoken.transfer()
+
+        // agregar token de sistema al dao
+        await contracts.daoreg.addtoken(
+            0,
+            'eosio.token',
+            `4,TLOS`,
+            { authorization: `${daoreg}@active` }
+        )
+
+        // users envian tokens al contrato
+        // checar que realemente se agreguen al balance 
+        // hacer otro token, mandarlo a los usuarios pero no agregarlo al dao y comprobar que falla
+        // usuarios retiran tokens del contrato
+        // usuario intenta retirar mas de lo que tiene y comprobar el error
+        // usuario intenta retirar un token que no tienen y comprobar el error
+        // checar que realmente se reste del balance 
     })
 })
