@@ -58,11 +58,14 @@ CONTRACT daoreg : public contract {
 
       auto primary_key () const { return dao_id; }
       uint128_t by_creator_dao () const { return (uint128_t(creator.value) << 64)  + dao.value; }
+      uint128_t by_dao_daoid () const { return (uint128_t(dao.value) << 64)  + dao_id; }
     };
 
     typedef multi_index<name("daos"), daos, 
       indexed_by<name("bycreatordao"),
-      const_mem_fun<daos, uint128_t, &daos::by_creator_dao>> 
+      const_mem_fun<daos, uint128_t, &daos::by_creator_dao>>,
+      indexed_by<name("bydaodaoid"),
+      const_mem_fun<daos, uint128_t, &daos::by_dao_daoid>>
     >dao_table;
 
 };

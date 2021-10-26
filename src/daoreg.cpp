@@ -14,11 +14,17 @@ ACTION daoreg::reset() {
 
 ACTION daoreg::create(const name& dao, const name& creator, const std::string& ipfs) {
 
-  require_auth(creator);
+  require_auth( is_account(dao) ? dao : creator );
   
   dao_table _dao(get_self(), get_self().value);
+  auto dao_by_id = _dao.get_index<name("bydaodaoid")>();
+  auto daoit = dao_by_id.lower_bound(uint128_t(dao.value) << 64);
+
+  check(daoit == dao_by_id.end(), "dao with same name already registered");
+
   _dao.emplace(get_self(), [&](auto& new_org){
     uint64_t dao_id = _dao.available_primary_key();
+    dao_id = dao_id == 0 ? 1 : dao_id;
     new_org.dao_id = dao_id;
     new_org.dao = dao;
     new_org.creator = creator;
@@ -26,6 +32,7 @@ ACTION daoreg::create(const name& dao, const name& creator, const std::string& i
   });
 
   if (is_account(dao)) {
+
     uint64_t ram_bytes = config_get_uint64(name("b.rambytes"));
 
     if (ram_bytes > 0) {
@@ -49,6 +56,7 @@ ACTION daoreg::create(const name& dao, const name& creator, const std::string& i
       ).send();
     }
   }
+  
 }
 
 ACTION daoreg::update(const uint64_t& dao_id, const std::string& ipfs) {
