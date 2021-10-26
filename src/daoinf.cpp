@@ -50,6 +50,8 @@ ACTION daoinf::reset () {
 ACTION daoinf::adddao(const name & creator, const uint64_t & dao_id) {
   require_auth( has_auth(creator) ? creator : get_self() );
 
+  check(dao_id > 0, "dao id must be greater than zero");
+
   // get root or get daos node
   hypha::Document daos_doc = get_dao_node();
 

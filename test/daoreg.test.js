@@ -114,7 +114,7 @@ describe('Dao registry', async function () {
         } catch (error) {
             assertError({
                 error,
-                textInside: `dao with same name already registered`,
+                textInside: `dao with the same name already exists`,
                 message: 'can not create dao with same name (expected)',
                 throwError: true
             })

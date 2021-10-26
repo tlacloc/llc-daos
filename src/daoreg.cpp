@@ -20,7 +20,7 @@ ACTION daoreg::create(const name& dao, const name& creator, const std::string& i
   auto dao_by_id = _dao.get_index<name("bydaodaoid")>();
   auto daoit = dao_by_id.lower_bound(uint128_t(dao.value) << 64);
 
-  check(daoit == dao_by_id.end(), "dao with same name already registered");
+  check(daoit == dao_by_id.end(), "dao with the same name already exists");
 
   _dao.emplace(get_self(), [&](auto& new_org){
     uint64_t dao_id = _dao.available_primary_key();
