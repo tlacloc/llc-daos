@@ -1,7 +1,7 @@
 #include <tlostoken.hpp>
 
 
-void token::create( const name& issuer, const asset&  maximum_supply )
+void tlostoken::create( const name& issuer, const asset&  maximum_supply )
 {
     require_auth( get_self() );
 
@@ -21,8 +21,7 @@ void token::create( const name& issuer, const asset&  maximum_supply )
     });
 }
 
-
-void token::issue( const name& to, const asset& quantity, const string& memo )
+void tlostoken::issue(const name &to, const asset &quantity, const string &memo)
 {
     auto sym = quantity.symbol;
     check( sym.is_valid(), "invalid symbol name" );
@@ -48,7 +47,7 @@ void token::issue( const name& to, const asset& quantity, const string& memo )
     add_balance( st.issuer, quantity, st.issuer );
 }
 
-void token::retire( const asset& quantity, const string& memo )
+void tlostoken::retire(const asset &quantity, const string &memo)
 {
     auto sym = quantity.symbol;
     check( sym.is_valid(), "invalid symbol name" );
@@ -72,10 +71,10 @@ void token::retire( const asset& quantity, const string& memo )
     sub_balance( st.issuer, quantity );
 }
 
-void token::transfer( const name&    from,
-                      const name&    to,
-                      const asset&   quantity,
-                      const string&  memo )
+void tlostoken::transfer(const name &from,
+                         const name &to,
+                         const asset &quantity,
+                         const string &memo)
 {
     check( from != to, "cannot transfer to self" );
     require_auth( from );
@@ -98,7 +97,8 @@ void token::transfer( const name&    from,
     add_balance( to, quantity, payer );
 }
 
-void token::sub_balance( const name& owner, const asset& value ) {
+void tlostoken::sub_balance(const name &owner, const asset &value)
+{
    accounts from_acnts( get_self(), owner.value );
 
    const auto& from = from_acnts.get( value.symbol.code().raw(), "no balance object found" );
@@ -109,7 +109,7 @@ void token::sub_balance( const name& owner, const asset& value ) {
       });
 }
 
-void token::add_balance( const name& owner, const asset& value, const name& ram_payer )
+void tlostoken::add_balance(const name &owner, const asset &value, const name &ram_payer)
 {
    accounts to_acnts( get_self(), owner.value );
    auto to = to_acnts.find( value.symbol.code().raw() );
@@ -124,7 +124,7 @@ void token::add_balance( const name& owner, const asset& value, const name& ram_
    }
 }
 
-void token::open( const name& owner, const symbol& symbol, const name& ram_payer )
+void tlostoken::open(const name &owner, const symbol &symbol, const name &ram_payer)
 {
    require_auth( ram_payer );
 
@@ -144,7 +144,7 @@ void token::open( const name& owner, const symbol& symbol, const name& ram_payer
    }
 }
 
-void token::close( const name& owner, const symbol& symbol )
+void tlostoken::close(const name &owner, const symbol &symbol)
 {
    require_auth( owner );
    accounts acnts( get_self(), owner.value );

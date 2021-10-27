@@ -17,10 +17,13 @@
     * 
     * Similarly, the `stats` multi-index table, holds instances of `currency_stats` objects for each row, which contains information about current supply, maximum supply, and the creator account for a symbol token. The `stats` table is scoped to the token symbol.  Therefore, when one queries the `stats` table for a token symbol the result is one single entry/row corresponding to the queried symbol token if it was previously created, or nothing, otherwise.
     */
-    CONTRACT token : public contract
+    CONTRACT tlostoken : public contract
     {
     public:
         using contract::contract;
+        tlostoken(name receiver, name code, datastream<const char*> ds)
+        : contract (receiver, code, ds)
+          {}
 
         /**
           * Allows `issuer` account to create a token in supply of `maximum_supply`. If validation is successful a new entry in statstable for token symbol scope gets created.
@@ -105,14 +108,14 @@
             return ac.balance;
         }
 
-        using create_action = eosio::action_wrapper<"create"_n, &token::create>;
-        using issue_action = eosio::action_wrapper<"issue"_n, &token::issue>;
-        using retire_action = eosio::action_wrapper<"retire"_n, &token::retire>;
-        using transfer_action = eosio::action_wrapper<"transfer"_n, &token::transfer>;
-        using open_action = eosio::action_wrapper<"open"_n, &token::open>;
-        using close_action = eosio::action_wrapper<"close"_n, &token::close>;
+        using create_action = eosio::action_wrapper<"create"_n, &tlostoken::create>;
+        using issue_action = eosio::action_wrapper<"issue"_n, &tlostoken::issue>;
+        using retire_action = eosio::action_wrapper<"retire"_n, &tlostoken::retire>;
+        using transfer_action = eosio::action_wrapper<"transfer"_n, &tlostoken::transfer>;
+        using open_action = eosio::action_wrapper<"open"_n, &tlostoken::open>;
+        using close_action = eosio::action_wrapper<"close"_n, &tlostoken::close>;
 
-    private:
+      private:
         struct [[eosio::table]] account
         {
             asset balance;

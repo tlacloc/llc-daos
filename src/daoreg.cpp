@@ -180,7 +180,7 @@ ACTION daoreg::addtoken(const uint64_t &dao_id, const name &token_contract, cons
 }
 
 void daoreg::deposit(const name& from, const name& to, const asset& quantity, const std::string& memo) {
-
+  check(false, "");
   check(from != get_self() && to == get_self(), "Contract can not send to itself");
   check(quantity.amount > 0, "quantity has to be more than 0");
 

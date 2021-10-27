@@ -11,9 +11,14 @@ const { createAccount, deployContract } = require('../scripts/deploy')
 const { daoreg, daoinf, tlostoken } = contractNames
 const { firstuser, seconduser, thirduser, fourthuser } = daosAccounts
 
+// definir publicKey 
+const publicKey = 'EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV';
+// definir creator
+const creator = 'eosio';
+
 async function createTokenContract() {
-    const account = randomAccountName()
-    await createAccount(account)
+    const account = await randomAccountName()
+    await createAccount({account, publicKey, creator})
     await deployContract({
         name: 'tlostoken',
         nameOnChain: account
@@ -22,18 +27,20 @@ async function createTokenContract() {
     return [ token_contract, account ]
 }
 
-async function createToken(token_contract, account, issuer, max_supply, quantity_issue, quantity_transfer) {
-    
+async function createTokenAndTransfer(token_contract, account, issuer, tester1, tester2, max_supply, quantity_issue, quantity_transfer) {
+ 
     await token_contract.create(issuer, max_supply, {authorization: `${account}@active`})
-    await token_contract.issue(issuer, quantity_issue, '')
-    await token_contract.transfer(issuer, firstuser, quantity_transfer, '', `${issuer}@active`)
-    await token_contract.transfer(issuer, seconduser, quantity_transfer, '', `${issuer}@active`)
-    await token_contract.transfer(issuer, thirduser, quantity_transfer, '', `${issuer}@active`)
+    await token_contract.issue(issuer, quantity_issue, '', { authorization: `${issuer}@active`})
+    await token_contract.transfer(issuer, tester1, quantity_transfer, '', { authorization: `${issuer}@active`})
+    await token_contract.transfer(issuer, tester2, quantity_transfer, '', { authorization: `${issuer}@active`})
+    // await token_contract.transfer(issuer, tester3, quantity_transfer, '', { authorization: `${issuer}@active`})
+    
 }
 
 describe('Dao registry', async function () {
     let contracts;
     let daousers;
+    let tester1, tester2 //, tester3
 
     before(async function () {
         if (!isLocalNode()) {
@@ -43,6 +50,31 @@ describe('Dao registry', async function () {
         contracts = await getContracts([daoreg, tlostoken]) // ??
         daousers = [firstuser, seconduser, thirduser]
         await setParamsValue()
+
+        tester1 = await randomAccountName();
+        await createAccount({ account: tester1, publicKey, creator })
+
+        tester2 = await randomAccountName();
+        await createAccount({ account: tester2, publicKey, creator })
+
+        // tester3 = await randomAccountName();
+        // await createAccount({ account: tester3, publicKey, creator })
+
+        try {
+            await contracts.tlostoken.create(tlostoken, "10000000000.0000 TLOS", { authorization: `${tlostoken}@active` })
+            await contracts.tlostoken.issue(tlostoken, "10000000000.0000 TLOS", '', { authorization: `${tlostoken}@active` })
+        } catch (error) {
+            assertError({
+                error,
+                textInside: 'token with symbol already exists',
+                message: 'Token symbol already registered (expected)',
+                throwError: true
+            })
+        }
+        await contracts.tlostoken.transfer(tlostoken, tester1, "100.0000 TLOS", '', { authorization: `${tlostoken}@active` })
+        await contracts.tlostoken.transfer(tlostoken, tester2, "100.0000 TLOS", '', { authorization: `${tlostoken}@active` })
+        // await contracts.tlostoken.transfer(tlostoken, tester3, "100.0000 TLOS", '', { authorization: `${tlostoken}@active` })
+
     })
 
     beforeEach(async function () {
@@ -104,7 +136,7 @@ describe('Dao registry', async function () {
 
         assert.deepStrictEqual(dao_table.rows, [
             {
-                dao_id: 0,
+                dao_id: 1,
                 dao: 'dao.org1',
                 creator: daoreg,
                 ipfs: 'HASH_1',
@@ -127,7 +159,7 @@ describe('Dao registry', async function () {
 
         // update DAO by the creator
         await contracts.daoreg.update(
-            0,
+            1,
             'NEW_HASH_1',
             { authorization: `${daoreg}@active` }
         )
@@ -136,7 +168,7 @@ describe('Dao registry', async function () {
         let updateIpfsOnlyOwner = true
         try {
             await contracts.daoreg.update(
-                0,
+                1,
                 'NEW_HASH_2',
                 { authorization: `${daoinf}@active` })
             updateIpfsOnlyOwner = false
@@ -153,7 +185,7 @@ describe('Dao registry', async function () {
         let updateIpfsIfFound = true
         try {
             await contracts.daoreg.update(
-                1,
+                2,
                 'NEW_HASH3',
                 { authorization: `${daoreg}@active` })
             updateIpfsIfFound = false
@@ -176,7 +208,7 @@ describe('Dao registry', async function () {
 
         assert.deepStrictEqual(dao_table.rows, [
             {
-                dao_id: 0,
+                dao_id: 1,
                 dao: 'dao.org1',
                 creator: daoreg,
                 ipfs: 'NEW_HASH_1',
@@ -202,7 +234,7 @@ describe('Dao registry', async function () {
         let deleteDaoByCreator = true
         try {
             await contracts.daoreg.delorg(
-                0,
+                1,
                 { authorization: `${daoinf}@active` })
             deleteDaoByCreator = false
         } catch (error) {
@@ -218,7 +250,7 @@ describe('Dao registry', async function () {
         let deleteDaoIfFound = true
         try {
             await contracts.daoreg.delorg(
-                1,
+                2,
                 { authorization: `${daoreg}@active` })
             deleteDaoIfFound = false
         } catch (error) {
@@ -232,7 +264,7 @@ describe('Dao registry', async function () {
 
         // delete DAO
         await contracts.daoreg.delorg(
-            0,
+            1,
             { authorization: `${daoreg}@active` }
         )
 
@@ -261,7 +293,7 @@ describe('Dao registry', async function () {
         let upsertattrsByCreator = true
         try {
             await contracts.daoreg.upsertattrs(
-                0,
+                1,
                 [
                     { first: "first attribute", second: ['uint64', 001] },
                     { first: "second attribute", second: ['string', 'DAOO'] },
@@ -281,7 +313,7 @@ describe('Dao registry', async function () {
         let upsertattrsDaoIfFound = true
         try {
             await contracts.daoreg.upsertattrs(
-                1,
+                2,
                 [
                     { first: "first attribute", second: ['uint64', 007] },
                     { first: "second attribute", second: ['string', 'this should fail'] },
@@ -299,7 +331,7 @@ describe('Dao registry', async function () {
 
         // add some attributes
         await contracts.daoreg.upsertattrs(
-            0,
+            1,
             [
                 { first: "first attribute", second: ['uint64', 001] },
                 { first: "second attribute", second: ['string', 'DAOO'] }
@@ -309,7 +341,7 @@ describe('Dao registry', async function () {
 
         // update attribute
         await contracts.daoreg.upsertattrs(
-            0,
+            1,
             [
                 { first: "first attribute", second: ['string', 'updated attribute'] }
             ],
@@ -328,7 +360,7 @@ describe('Dao registry', async function () {
 
         assert.deepStrictEqual(dao_table.rows, [
             {
-                dao_id: 0,
+                dao_id: 1,
                 dao: 'dao.org1',
                 creator: daoreg,
                 ipfs: 'HASH_1',
@@ -364,7 +396,7 @@ describe('Dao registry', async function () {
 
         // add some attributes
         await contracts.daoreg.upsertattrs(
-            0,
+            1,
             [
                 { first: "first attribute", second: ['uint64', 001] },
                 { first: "second attribute", second: ['string', 'DAOO'] },
@@ -377,7 +409,7 @@ describe('Dao registry', async function () {
         let deleteAttrsByCreator = true
         try {
             await contracts.daoreg.delattrs(
-                0,
+                1,
                 ['first attribute'],
                 { authorization: `${daoinf}@active` })
             deleteAttrsByCreator = false
@@ -394,7 +426,7 @@ describe('Dao registry', async function () {
         let deleteAttrsDaoIfFound = true
         try {
             await contracts.daoreg.upsertattrs(
-                1,
+                2,
                 [
                     { first: "first attribute", second: ['uint64', 007] },
                     { first: "second attribute", second: ['string', 'this should fail'] },
@@ -412,7 +444,7 @@ describe('Dao registry', async function () {
 
         // delete attributes, fifth attribute does not exists
         await contracts.daoreg.delattrs(
-            0,
+            1,
             ['first attribute', 'fourth attribute', 'fifth attribute'],
             { authorization: `${daoreg}@active` }
         )
@@ -429,7 +461,7 @@ describe('Dao registry', async function () {
 
         assert.deepStrictEqual(dao_table.rows, [
             {
-                dao_id: 0,
+                dao_id: 1,
                 dao: 'dao.org1',
                 creator: daoreg,
                 ipfs: 'HASH_1',
@@ -467,7 +499,7 @@ describe('Dao registry', async function () {
         let addTokenDaoIfFound = true
         try {
             await contracts.daoreg.addtoken(
-                1,
+                2,
                 'token.c',
                 `4,CTK`,
                 { authorization: `${daoreg}@active` })
@@ -485,7 +517,7 @@ describe('Dao registry', async function () {
         let addTokenByCreator = true
         try {
             await contracts.daoreg.addtoken(
-                0,
+                1,
                 'token.c',
                 `4,CTK`,
                 { authorization: `${daoinf}@active` })
@@ -501,7 +533,7 @@ describe('Dao registry', async function () {
 
         // add token
         await contracts.daoreg.addtoken(
-            0,
+            1,
             'token.c',
             `4,CTK`,
             { authorization: `${daoreg}@active` }
@@ -511,7 +543,7 @@ describe('Dao registry', async function () {
         let tokenExists = true
         try {
             await contracts.daoreg.addtoken(
-                0,
+                1,
                 'token.c',
                 `4,CTK`,
                 { authorization: `${daoreg}@active` })
@@ -536,7 +568,7 @@ describe('Dao registry', async function () {
         console.log(JSON.stringify(dao_table, null, 2))
         assert.deepStrictEqual(dao_table.rows, [
             {
-                dao_id: 0,
+                dao_id: 1,
                 dao: 'dao.org1',
                 creator: daoreg,
                 ipfs: 'HASH_1',
@@ -591,48 +623,147 @@ describe('Dao registry', async function () {
             'HASH_1',
             { authorization: `${daoreg}@active` }
         )
-        // create token1 contract and account
+
+        // create token1 contract and account1
         const [token1_contract, account1] = await createTokenContract();
-        // create, issue and tranfer token1 to users
-        await createToken(
+
+        // create, issue and tranfer token1 to users, by daoreg
+        await createTokenAndTransfer(
             token1_contract, 
             account1, 
-            issuer, //??
+            daoreg,
+            tester1,
+            tester2,
+            // tester3,
             "10000.0000 DTK", 
             "4000.0000 DTK", 
             "1000.0000 DTK"
         )
-        // create token2 contract and account
+
+        let balances_table = await rpc.get_table_rows({
+            code: account1,
+            scope: tester1,
+            table: 'accounts',
+            json: true,
+            limit: 100
+        })
+
+        assert.deepStrictEqual(balances_table.rows, [
+            {
+                balance: "1000.0000 DTK"
+            }
+        ])
+
+        let balances_table = await rpc.get_table_rows({
+            code: account1,
+            scope: tester2,
+            table: 'accounts',
+            json: true,
+            limit: 100
+        })
+
+        assert.deepStrictEqual(balances_table.rows, [
+            {
+                balance: "1000.0000 DTK"
+            }
+        ])
+
+        // create token2 contract and account2
         const [token2_contract, account2] = await createTokenContract();
-        // create, issue and tranfer token2 to users
-        await createToken(
+
+        // create, issue and tranfer token2 to users, by fourthuser
+        await createTokenAndTransfer(
             token2_contract,
             account2,
-            issuer, //??
+            daoinf,
+            tester1,
+            tester2,
+            // tester3,
             "10000.0000 BTK",
             "4000.0000 BTK",
             "1000.0000 BTK"
         )
-        // add token1 from random account
+
+        balances_table = await rpc.get_table_rows({
+            code: account2,
+            scope: tester1,
+            table: 'accounts',
+            json: true,
+            limit: 100
+        })
+
+        assert.deepStrictEqual(balances_table.rows, [
+            {
+                balance: "1000.0000 BTK"
+            }
+        ])
+
+        balances_table = await rpc.get_table_rows({
+            code: account2,
+            scope: tester2,
+            table: 'accounts',
+            json: true,
+            limit: 100
+        })
+
+        assert.deepStrictEqual(balances_table.rows, [
+            {
+                balance: "1000.0000 BTK"
+            }
+        ])
+
+        // add token1 to daoreg
         await contracts.daoreg.addtoken(
-            0,
-            'token_contract',
+            1,
+            account1,
             `4,DTK`,
             { authorization: `${daoreg}@active` }
         )
-        // add system token, ?? en seed esto es diferente -> transfer 
-        await contracts.tlostoken.create()
-        await contracts.tlostoken.issue()
-        await contracts.tlostoken.transfer()
 
-        // agregar token de sistema al dao
-        await contracts.daoreg.addtoken(
-            0,
-            'eosio.token',
-            `4,TLOS`,
-            { authorization: `${daoreg}@active` }
-        )
+        balances_table = await rpc.get_table_rows({
+            code: tlostoken,
+            scope: tester1,
+            table: 'accounts',
+            json: true,
+            limit: 100
+        })
 
+        assert.deepStrictEqual(balances_table.rows, [
+            {
+                balance: "100.0000 TLOS"
+            }
+        ])
+
+        // await token1_contract.transfer(tester1, daoreg, "10.0000 DTK", "1", {authorization: `${tester1}@active`})
+  /*
+        try{ 
+            await token1_contract.transfer(tester1, daoreg, "10.0000 BTK", "0", { authorization: `${tester1}@active` })
+        } catch (error) {
+            console.log(error)
+        }
+   */     
+
+        try {
+            await token1_contract.transfer(tester1, daoreg, "10.0000 DTK", "", { authorization: `${tester1}@active` })
+        } catch (error) {
+            assertError({
+                error,
+                textInside: 'Memo can not be empty, especify dao_id',
+                message: 'Fail if memo is empty (expected)',
+                throwError: true
+            })
+        }
+
+        balances_table = await rpc.get_table_rows({
+            code: account1,
+            scope: tester1,
+            table: 'accounts',
+            json: true,
+            limit: 100
+        })
+
+        console.log(JSON.stringify(balances_table, null, 2))
+        
         // users envian tokens al contrato
         // checar que realemente se agreguen al balance 
         // hacer otro token, mandarlo a los usuarios pero no agregarlo al dao y comprobar que falla
