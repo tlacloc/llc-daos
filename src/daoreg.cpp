@@ -205,8 +205,6 @@ void daoreg::deposit(const name& from, const name& to, const asset& quantity, co
     if(dao_id == 0) {
 
       for (auto& itr : system_tokens) {
-        // checar si hay que obtener el token_contract y checar que este sea igual al itr.first
-        // despues con un check verificar que este token_contract sea igual a get_first_receiver
         if (itr.first == get_first_receiver() && itr.second == token_symbol) {
           token_is_registered = true;
           token_account = itr.first;
