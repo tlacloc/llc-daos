@@ -1,6 +1,6 @@
 #include <daoreg.hpp>
 
-ACTION daoreg::reset() {
+ACTION daoreg::reset(std::vector<name> users) {
 
   require_auth(get_self());
 
@@ -9,6 +9,14 @@ ACTION daoreg::reset() {
   auto daoit = _dao.begin();
   while (daoit != _dao.end()) {
     daoit = _dao.erase(daoit);
+  }
+
+  for (auto const& itr : users) {
+    balances_table _balances(get_self(), itr.value);
+    auto it = _balances.begin();
+    while(it != _balances.end()){
+      it = _balances.erase(it);
+    }
   }
 }
 
@@ -180,69 +188,71 @@ ACTION daoreg::addtoken(const uint64_t &dao_id, const name &token_contract, cons
 }
 
 void daoreg::deposit(const name& from, const name& to, const asset& quantity, const std::string& memo) {
-  check(false, "");
-  check(from != get_self() && to == get_self(), "Contract can not send to itself");
-  check(quantity.amount > 0, "quantity has to be more than 0");
 
-  check(!memo.empty(), "Memo can not be empty, especify dao_id");
+  if(to == get_self()) {
+    check(!memo.empty(), "Memo can not be empty, especify dao_id");
 
-  int64_t dao_id;
-  name token_account;
-  bool token_is_registered = false;
+    int64_t dao_id;
+    name token_account;
+    bool token_is_registered = false;
 
-  dao_id = stoi(memo);
-  check(dao_id >= 0, "Dao id has to be a positive number");
-  symbol token_symbol = quantity.symbol;
+    dao_id = stoi(memo);
+    check(dao_id >= 0, "Dao id has to be a positive number");
+    symbol token_symbol = quantity.symbol;
 
-  dao_table _dao(get_self(), get_self().value);
+    dao_table _dao(get_self(), get_self().value);
 
-  if(dao_id == 0) {
+    if(dao_id == 0) {
 
-    for (auto& itr : system_tokens) {
-      if (itr.first == get_first_receiver() && itr.second == token_symbol) {
-        token_is_registered = true;
-        token_account = itr.first;
-        break;
-      }             
-    }
-    check(!token_is_registered, "This is not a supported system token");
-  } else {
-    auto daoit = _dao.find(dao_id);
-    check(daoit != _dao.end(), "Organization not found");
-    auto dao_tokens = daoit->tokens;
-
-    for (auto& itr : dao_tokens) {
-      if (itr.first == get_first_receiver() && itr.second == token_symbol) {
-        token_is_registered = true;
-        token_account = itr.first;
-        break;
+      for (auto& itr : system_tokens) {
+        // checar si hay que obtener el token_contract y checar que este sea igual al itr.first
+        // despues con un check verificar que este token_contract sea igual a get_first_receiver
+        if (itr.first == get_first_receiver() && itr.second == token_symbol) {
+          token_is_registered = true;
+          token_account = itr.first;
+          break;
+        }             
       }
+      check(token_is_registered, "This is not a supported system token");
+    } else {
+      auto daoit = _dao.find(dao_id);
+      check(daoit != _dao.end(), "Organization not found");
+      auto dao_tokens = daoit->tokens;
+
+      for (auto& itr : dao_tokens) {
+        if (itr.first == get_first_receiver() && itr.second == token_symbol) {
+          token_is_registered = true;
+          token_account = itr.first;
+          break;
+        }
+      }
+      check(token_is_registered, "Token is not supported by a registred Dao");
     }
-    check(!token_is_registered, "Token is not supported by a registred Dao");
-  }
 
-  balances_table _balances(get_self(), from.value);
+    balances_table _balances(get_self(), from.value);
 
-  auto balances_by_token_account_token = _balances.get_index<name("bytkaccttokn")>();
-  auto itr = balances_by_token_account_token.find((uint128_t(token_account.value) << 64) + token_symbol.raw());
+    auto balances_by_token_account_token = _balances.get_index<name("bytkaccttokn")>();
+    auto itr = balances_by_token_account_token.find((uint128_t(token_account.value) << 64) + token_symbol.raw());
 
-  if (itr == balances_by_token_account_token.end()) {
-    _balances.emplace(get_self(), [&](auto& user){
-      user.available = quantity;
-      user.locked = asset(0, token_symbol);
-      user.dao_id = dao_id;
-      user.token_account = token_account;
-    });
-  } else {
-    balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
-      user.available += quantity;
-    });
+    if (itr == balances_by_token_account_token.end()) {
+      _balances.emplace(get_self(), [&](auto& user){
+        user.id = _balances.available_primary_key();
+        user.available = quantity;
+        user.locked = asset(0, token_symbol);
+        user.dao_id = dao_id;
+        user.token_account = token_account;
+      });
+    } else {
+      balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
+        user.available += quantity;
+      });
+    }
   }
 }
 
 ACTION daoreg::withdraw(const name &account, const name &token_account, const asset &quantity) {
+  check(quantity.amount > 0, "Amount to withdraw has to be higher than zero");
   require_auth(account);
-  check(quantity.amount > 0, "amount to withdraw must be positive quantity");
 
   balances_table _balances(get_self(), account.value);
   symbol token_symbol = quantity.symbol;
@@ -250,19 +260,20 @@ ACTION daoreg::withdraw(const name &account, const name &token_account, const as
   auto balances_by_token_account_token = _balances.get_index<name("bytkaccttokn")>();
   auto itr = balances_by_token_account_token.find((uint128_t(token_account.value) << 64) + token_symbol.raw());
 
-  check(itr != balances_by_token_account_token.end(), "token account and symbol are not registered in your account");
-  check(itr->available >= quantity, "you do not have enough balance");
+  check(itr != balances_by_token_account_token.end(), "Token account and symbol are not registered in your account");
+  check(itr->available >= quantity, "You do not have enough balance");
 
   balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
     user.available -= quantity;
   });
 
   action(
-      permission_level(get_self(), name("active")),
-      name("eosio.token"),
+      permission_level{get_self(), name("active")},
       token_account,
-      std::make_tuple(get_self(), account, quantity, "withdraw from `${get_self()}`")
+      "transfer"_n,
+      std::make_tuple(get_self(), account, quantity, string("withdraw from here"))
   ).send();
+
 }
 
 
