@@ -641,38 +641,9 @@ describe('Dao registry', async () => {
         assert.deepStrictEqual(tokenExists, true)
     })
 
-    it('Reset settings', async () => {
-        await contracts.daoreg.resetsttngs({ authorization: `${daoreg}@active` })
-
-        let resetByDaoreg = true
-        try {
-            await contracts.daoreg.resetsttngs(
-                { authorization: `${firstuser}@active` })
-            resetByDaoreg = false
-        } catch (error) {
-            assertError({
-                error,
-                textInside: `missing authority of ${daoreg}`,
-                message: 'users can not reset settings (expected)',
-                throwError: true
-            })
-        }
-
-        const dao_table = await rpc.get_table_rows({
-            code: daoreg,
-            scope: daoreg,
-            table: 'daos',
-            json: true,
-            limit: 100
-        })
-
-        assert.deepStrictEqual(dao_table.rows, [])
-        assert.deepStrictEqual(resetByDaoreg, true)
-    })
-
     it('Accepts deposits correctly', async () => {
-        
-        await contracts.daoreg.create('dao.org1', daoreg, 'HASH_1', { authorization: `${daoreg}@active` })
+       
+        await contracts.daoreg.create(firstdao, firstuser, 'HASH_1', { authorization: `${firstdao}@active` })
 
         const [token1_contract, account1] = await createTokenContract();
 
@@ -706,7 +677,7 @@ describe('Dao registry', async () => {
         await checkBalance(account2, tester1, 'accounts', "1000.0000 BTK", "", "", "", "")
         await checkBalance(account2, tester2, 'accounts', "1000.0000 BTK", "", "", "", "")
 
-        await contracts.daoreg.addtoken(1, account1, `4,DTK`, { authorization: `${daoreg}@active` })
+        await contracts.daoreg.addtoken(1, account1, `4,DTK`, { authorization: `${firstuser}@active` })
 
         const dao_table = await rpc.get_table_rows({
             code: daoreg,
@@ -721,7 +692,7 @@ describe('Dao registry', async () => {
             {
                 dao_id: 1,
                 dao: 'dao.org1',
-                creator: daoreg,
+                creator: firstuser,
                 ipfs: 'HASH_1',
                 attributes: [],
                 tokens: [
@@ -853,10 +824,12 @@ describe('Dao registry', async () => {
         assert.deepStrictEqual(daoIdPositiveNumber, true)
         assert.deepStrictEqual(organizationNotFound, true)
         assert.deepStrictEqual(tokenIsNotSupported, true)
+
     })
 
     it('Allows to withdraw correctly', async () => {
-        await contracts.daoreg.create('dao.org1', daoreg, 'HASH_1', { authorization: `${daoreg}@active` })
+
+        await contracts.daoreg.create(firstdao, firstuser, 'HASH_1', { authorization: `${firstdao}@active` })
 
         const [token1_contract, account1] = await createTokenContract();
 
@@ -871,7 +844,7 @@ describe('Dao registry', async () => {
             "1000.0000 DTK"
         )
 
-        await contracts.daoreg.addtoken(1, account1, `4,DTK`, { authorization: `${daoreg}@active` })
+        await contracts.daoreg.addtoken(1, account1, `4,DTK`, { authorization: `${firstuser}@active` })
         
         await checkBalance(eosio_account, tester1, 'accounts', "80.0000 TLOS", "", "", "", "")
 
@@ -981,5 +954,34 @@ describe('Dao registry', async () => {
         assert.deepStrictEqual(withdrawZeroAmount, true)
         assert.deepStrictEqual(withdrawMoreThanBalance, true)
         assert.deepStrictEqual(withdrawNonExitingToken, true)
+    })
+
+    it('Reset settings', async () => {
+        await contracts.daoreg.resetsttngs({ authorization: `${daoreg}@active` })
+
+        let resetByDaoreg = true
+        try {
+            await contracts.daoreg.resetsttngs(
+                { authorization: `${firstuser}@active` })
+            resetByDaoreg = false
+        } catch (error) {
+            assertError({
+                error,
+                textInside: `missing authority of ${daoreg}`,
+                message: 'users can not reset settings (expected)',
+                throwError: true
+            })
+        }
+
+        const dao_table = await rpc.get_table_rows({
+            code: daoreg,
+            scope: daoreg,
+            table: 'daos',
+            json: true,
+            limit: 100
+        })
+
+        assert.deepStrictEqual(dao_table.rows, [])
+        assert.deepStrictEqual(resetByDaoreg, true)
     })
 })
