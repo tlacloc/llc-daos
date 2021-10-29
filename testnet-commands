@@ -1,0 +1,11 @@
+
+
+./cleos -u https://testnet.telos.caleos.io push action daoregistry1 reset '[]' -p daoregistry1@active
+
+
+
+./cleos -u https://testnet.telos.caleos.io push action daoinfor1111 reset '[]' -p daoinfor1111@active
+
+
+
+

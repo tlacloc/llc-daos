@@ -8,9 +8,10 @@ const { setParamsValue } = require('../scripts/contract-settings')
 const { AssertionError } = require('assert/strict')
 const { createAccount, deployContract } = require('../scripts/deploy')
 const { SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG } = require('constants')
-
 const { daoreg, daoinf, tlostoken } = contractNames
-const { firstuser, seconduser, thirduser, fourthuser } = daosAccounts
+
+
+const { firstuser, seconduser, thirduser, fourthuser, firstdao, seconddao } = daosAccounts
 
 
 const publicKey = 'EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV';
@@ -141,17 +142,27 @@ describe('Dao registry', async () => {
 
     })
 
-    it('Create DAO', async () => {
-        await contracts.daoreg.create('dao.org1', daoreg, 'HASH_1', { authorization: `${daoreg}@active` })
+    it('Create DAO', async function () {
+        await contracts.daoreg.create(
+            firstdao,
+            firstuser,
+            'HASH_1',
+            { authorization: `${firstdao}@active` }
+        )
+
         let daoCreation = true;
         try {
-            await contracts.daoreg.create('dao.org2', firstuser, 'HASH_2', { authorization: `${daoinf}@active` })
+            await contracts.daoreg.create(
+                seconddao,
+                seconduser,
+                'HASH_2',
+                { authorization: `${seconduser}@active` })
             daoCreation = false
         } catch (error) {
             assertError({
                 error,
-                textInside: `missing authority of testuseraaa`,
-                message: 'user must be have authorization (expected)',
+                textInside: `missing authority of ${seconddao}`,
+                message: 'authorization of dao needed (expected)',
                 throwError: true
             })
         }
@@ -167,8 +178,8 @@ describe('Dao registry', async () => {
         assert.deepStrictEqual(dao_table.rows, [
             {
                 dao_id: 1,
-                dao: 'dao.org1',
-                creator: daoreg,
+                dao: firstdao,
+                creator: firstuser,
                 ipfs: 'HASH_1',
                 attributes: [],
                 tokens: []
@@ -178,19 +189,61 @@ describe('Dao registry', async () => {
         assert.deepStrictEqual(daoCreation, true)
     })
 
-    it('Update IPFS DAO', async () => {
-        await contracts.daoreg.create('dao.org1', daoreg, 'HASH_1', { authorization: `${daoreg}@active` })
+    it('Create another DAO with same name', async function () {
+        await contracts.daoreg.create(
+            firstdao,
+            firstuser,
+            'HASH_1',
+            { authorization: `${firstdao}@active` }
+        )
 
-        await contracts.daoreg.update(1, 'NEW_HASH_1', { authorization: `${daoreg}@active` })
+        let daoCreatedTwice = false;
+        try {
+            await contracts.daoreg.create(
+                firstdao,
+                seconduser,
+                'HASH_2',
+                { authorization: `${firstdao}@active` })
+            daoCreatedTwice = true
+        } catch (error) {
+            assertError({
+                error,
+                textInside: `dao with the same name already exists`,
+                message: 'can not create dao with same name (expected)',
+                throwError: true
+            })
+        }
+
+        assert.deepStrictEqual(daoCreatedTwice, false)
+    })
+
+    it('Update IPFS DAO', async function () {
+        // create DAO
+        await contracts.daoreg.create(
+            firstdao,
+            firstuser,
+            'HASH_1',
+            { authorization: `${firstdao}@active` }
+        )
+
+        // update DAO by the creator
+        await contracts.daoreg.update(
+            1,
+            'NEW_HASH_1',
+            { authorization: `${firstuser}@active` }
+        )
 
         let updateIpfsOnlyOwner = true
         try {
-            await contracts.daoreg.update(1, 'NEW_HASH_2', { authorization: `${daoinf}@active` })
+            await contracts.daoreg.update(
+                1,
+                'NEW_HASH_2',
+                { authorization: `${seconduser}@active` })
             updateIpfsOnlyOwner = false
         } catch (error) {
             assertError({
                 error,
-                textInside: `missing authority of daoregistry`,
+                textInside: `missing authority of ${firstuser}`,
                 message: 'dao cannot be updated by someone else (expected)',
                 throwError: true
             })
@@ -198,7 +251,10 @@ describe('Dao registry', async () => {
 
         let updateIpfsIfFound = true
         try {
-            await contracts.daoreg.update(2, 'NEW_HASH3', { authorization: `${daoreg}@active` })
+            await contracts.daoreg.update(
+                2,
+                'NEW_HASH3',
+                { authorization: `${daoreg}@active` })
             updateIpfsIfFound = false
         } catch (error) {
             assertError({
@@ -220,8 +276,8 @@ describe('Dao registry', async () => {
         assert.deepStrictEqual(dao_table.rows, [
             {
                 dao_id: 1,
-                dao: 'dao.org1',
-                creator: daoreg,
+                dao: firstdao,
+                creator: firstuser,
                 ipfs: 'NEW_HASH_1',
                 attributes: [],
                 tokens: []
@@ -232,17 +288,27 @@ describe('Dao registry', async () => {
         assert.deepStrictEqual(updateIpfsIfFound, true)
     })
 
-    it('Delete DAO', async () => {
-        await contracts.daoreg.create('dao.org1', daoreg, 'HASH_1', { authorization: `${daoreg}@active` })
+    it('Delete DAO', async function () {
+        // create DAO
+        await contracts.daoreg.create(
+            firstdao,
+            firstuser,
+            'HASH_1',
+            { authorization: `${firstdao}@active` }
+        )
 
+        // DAO can only be deleted by daoreg
         let deleteDaoByCreator = true
         try {
-            await contracts.daoreg.delorg(1, { authorization: `${daoinf}@active` })
-            deleteDaoByCreator = false 
+            await contracts.daoreg.delorg(
+                1,
+                { authorization: `${firstuser}@active` })
+            deleteDaoByCreator = false
+
         } catch (error) {
             assertError({
                 error,
-                textInside: `missing authority of daoregistry1`,
+                textInside: `missing authority of ${daoreg}`,
                 message: 'users can not delete dao (expected)',
                 throwError: true
             })
@@ -250,7 +316,9 @@ describe('Dao registry', async () => {
 
         let deleteDaoIfFound = true
         try {
-            await contracts.daoreg.delorg(2, { authorization: `${daoreg}@active` })
+            await contracts.daoreg.delorg(
+                2,
+                { authorization: `${daoreg}@active` })
             deleteDaoIfFound = false
         } catch (error) {
             assertError({
@@ -261,7 +329,10 @@ describe('Dao registry', async () => {
             })
         }
 
-        await contracts.daoreg.delorg(1, { authorization: `${daoreg}@active` })
+        await contracts.daoreg.delorg(
+            1,
+            { authorization: `${daoreg}@active` }
+        )
 
         const dao_table = await rpc.get_table_rows({
             code: daoreg,
@@ -276,8 +347,13 @@ describe('Dao registry', async () => {
         assert.deepStrictEqual(deleteDaoIfFound, true)
     })
 
-    it('Upsert attributes', async () => {
-        await contracts.daoreg.create('dao.org1', daoreg, 'HASH_1', { authorization: `${daoreg}@active` })
+    it('Upsert attributes', async function () {
+        await contracts.daoreg.create(
+            firstdao,
+            firstuser,
+            'HASH_1',
+            { authorization: `${firstdao}@active` }
+        )
 
         let upsertattrsByCreator = true
         try {
@@ -287,12 +363,12 @@ describe('Dao registry', async () => {
                     { first: "first attribute", second: ['uint64', 001] },
                     { first: "second attribute", second: ['string', 'DAOO'] },
                 ],
-                { authorization: `${daoinf}@active` })
+                { authorization: `${seconduser}@active` })
             upsertattrsByCreator = false
         } catch (error) {
             assertError({
                 error,
-                textInside: `missing authority of daoregistry1`,
+                textInside: `missing authority of ${firstuser}`,
                 message: 'add or modify attributes can only be done by creator',
                 throwError: true
             })
@@ -306,7 +382,7 @@ describe('Dao registry', async () => {
                     { first: "first attribute", second: ['uint64', 007] },
                     { first: "second attribute", second: ['string', 'this should fail'] },
                 ],
-                { authorization: `${daoreg}@active` })
+                { authorization: `${firstuser}@active` })
             upsertattrsDaoIfFound = false
         } catch (error) {
             assertError({
@@ -323,7 +399,7 @@ describe('Dao registry', async () => {
                 { first: "first attribute", second: ['uint64', 001] },
                 { first: "second attribute", second: ['string', 'DAOO'] }
             ],
-            { authorization: `${daoreg}@active` }
+            { authorization: `${firstuser}@active` }
         )
 
         await contracts.daoreg.upsertattrs(
@@ -331,7 +407,7 @@ describe('Dao registry', async () => {
             [
                 { first: "first attribute", second: ['string', 'updated attribute'] }
             ],
-            { authorization: `${daoreg}@active` }
+            { authorization: `${firstuser}@active` }
         )
 
         const dao_table = await rpc.get_table_rows({
@@ -347,8 +423,8 @@ describe('Dao registry', async () => {
         assert.deepStrictEqual(dao_table.rows, [
             {
                 dao_id: 1,
-                dao: 'dao.org1',
-                creator: daoreg,
+                dao: firstdao,
+                creator: firstuser,
                 ipfs: 'HASH_1',
                 attributes: [
                     {
@@ -371,8 +447,14 @@ describe('Dao registry', async () => {
         assert.deepStrictEqual(upsertattrsDaoIfFound, true)
     })
 
-    it('Deletes attributes', async () => {
-        await contracts.daoreg.create('dao.org1', daoreg, 'HASH_1', { authorization: `${daoreg}@active` })
+    it('Deletes attributes', async function () {
+        // create DAO
+        await contracts.daoreg.create(
+            firstdao,
+            firstuser,
+            'HASH_1',
+            { authorization: `${firstdao}@active` }
+        )
 
         await contracts.daoreg.upsertattrs(
             1,
@@ -382,7 +464,7 @@ describe('Dao registry', async () => {
                 { first: "third attribute", second: ['int64', -2] },
                 { first: "fourth attribute", second: ['string', 'number 4'] },
             ],
-            { authorization: `${daoreg}@active` }
+            { authorization: `${firstuser}@active` }
         )
 
         let deleteAttrsByCreator = true
@@ -390,12 +472,12 @@ describe('Dao registry', async () => {
             await contracts.daoreg.delattrs(
                 1,
                 ['first attribute'],
-                { authorization: `${daoinf}@active` })
+                { authorization: `${seconduser}@active` })
             deleteAttrsByCreator = false
         } catch (error) {
             assertError({
                 error,
-                textInside: `missing authority of daoregistry1`,
+                textInside: `missing authority of ${firstuser}`,
                 message: 'attributes can only be deleted by creator',
                 throwError: true
             })
@@ -409,7 +491,7 @@ describe('Dao registry', async () => {
                     { first: "first attribute", second: ['uint64', 007] },
                     { first: "second attribute", second: ['string', 'this should fail'] },
                 ],
-                { authorization: `${daoreg}@active` })
+                { authorization: `${firstuser}@active` })
             deleteAttrsDaoIfFound = false
         } catch (error) {
             assertError({
@@ -423,7 +505,7 @@ describe('Dao registry', async () => {
         await contracts.daoreg.delattrs(
             1,
             ['first attribute', 'fourth attribute', 'fifth attribute'],
-            { authorization: `${daoreg}@active` }
+            { authorization: `${firstuser}@active` }
         )
 
         const dao_table = await rpc.get_table_rows({
@@ -439,8 +521,8 @@ describe('Dao registry', async () => {
         assert.deepStrictEqual(dao_table.rows, [
             {
                 dao_id: 1,
-                dao: 'dao.org1',
-                creator: daoreg,
+                dao: firstdao,
+                creator: firstuser,
                 ipfs: 'HASH_1',
                 attributes: [
                     {
@@ -463,8 +545,14 @@ describe('Dao registry', async () => {
         assert.deepStrictEqual(deleteAttrsDaoIfFound, true)
     })
 
-    it('Adds token correctly', async () => {
-        await contracts.daoreg.create('dao.org1', daoreg, 'HASH_1', { authorization: `${daoreg}@active` })
+    it('Adds token correctly', async function () {
+        // create DAO
+        await contracts.daoreg.create(
+            firstdao,
+            firstuser,
+            'HASH_1',
+            { authorization: `${firstdao}@active` }
+        )
 
         let addTokenDaoIfFound = true
         try {
@@ -472,7 +560,7 @@ describe('Dao registry', async () => {
                 2,
                 'token.c',
                 `4,CTK`,
-                { authorization: `${daoreg}@active` })
+                { authorization: `${firstuser}@active` })
             addTokenDaoIfFound= false
         } catch (error) {
             assertError({
@@ -489,18 +577,23 @@ describe('Dao registry', async () => {
                 1,
                 'token.c',
                 `4,CTK`,
-                { authorization: `${daoinf}@active` })
+                { authorization: `${seconduser}@active` })
             addTokenByCreator = false
         } catch (error) {
             assertError({
                 error,
-                textInside: `missing authority of daoregistry1`,
+                textInside: `missing authority of ${firstuser}`,
                 message: 'token can be added only by creator (expected)',
                 throwError: true
             })
         }
-
-        await contracts.daoreg.addtoken(1, 'token.c', `4,CTK`, { authorization: `${daoreg}@active` })
+      
+        await contracts.daoreg.addtoken(
+            1,
+            'token.c',
+            `4,CTK`,
+            { authorization: `${firstuser}@active` }
+        )
 
         let tokenExists = true
         try {
@@ -508,7 +601,7 @@ describe('Dao registry', async () => {
                 1,
                 'token.c',
                 `4,CTK`,
-                { authorization: `${daoreg}@active` })
+                { authorization: `${firstuser}@active` })
             tokenExists = false
         } catch (error) {
             assertError({
@@ -531,8 +624,8 @@ describe('Dao registry', async () => {
         assert.deepStrictEqual(dao_table.rows, [
             {
                 dao_id: 1,
-                dao: 'dao.org1',
-                creator: daoreg,
+                dao: firstdao,
+                creator: firstuser,
                 ipfs: 'HASH_1',
                 attributes: [],
                 tokens: [
@@ -554,12 +647,12 @@ describe('Dao registry', async () => {
         let resetByDaoreg = true
         try {
             await contracts.daoreg.resetsttngs(
-                { authorization: `${daoinf}@active` })
+                { authorization: `${firstuser}@active` })
             resetByDaoreg = false
         } catch (error) {
             assertError({
                 error,
-                textInside: `missing authority of daoregistry1`,
+                textInside: `missing authority of ${daoreg}`,
                 message: 'users can not reset settings (expected)',
                 throwError: true
             })
