@@ -19,7 +19,7 @@ CONTRACT daoreg : public contract {
         config(receiver, receiver.value)
         {}
 
-    ACTION reset();
+    ACTION reset(std::vector<name> users);
 
     ACTION create(const name& dao, const name& creator, const std::string& ipfs);
 
@@ -37,6 +37,11 @@ CONTRACT daoreg : public contract {
 
     ACTION addtoken(const uint64_t& dao_id, const name &token_contract, const symbol &token);
 
+    [[eosio::on_notify("*::transfer")]] 
+    void deposit(const name& from, const name& to, const asset& quantity, const std::string& memo);
+        
+    ACTION withdraw(const name &account, const name &dao, const asset &quantity);
+
   private:
 
     DEFINE_CONFIG_TABLE
@@ -47,6 +52,8 @@ CONTRACT daoreg : public contract {
     config_tables config;
 
     typedef std::variant<std::monostate, uint64_t, int64_t, double, name, asset, string> VariantValue;
+
+    std::vector<std::pair<name, symbol>> system_tokens = {{name("eosio.token"), symbol("TLOS", 4)}};
 
     TABLE daos {
       uint64_t dao_id;
@@ -68,11 +75,21 @@ CONTRACT daoreg : public contract {
       const_mem_fun<daos, uint128_t, &daos::by_dao_daoid>>
     >dao_table;
 
+    TABLE balances {
+      uint64_t id;
+      asset available;
+      asset locked; 
+      uint64_t dao_id;
+      name token_account;
+
+      uint64_t primary_key () const { return id; }
+      uint128_t by_token_account_token () const { return (uint128_t(token_account.value) << 64) + available.symbol.raw(); }
+    };
+
+    typedef multi_index<name("balances"), balances,
+      indexed_by<name("bytkaccttokn"),
+      const_mem_fun<balances, uint128_t, &balances::by_token_account_token>>
+    >balances_table;
 };
 
-extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
-  switch (action) {
-    EOSIO_DISPATCH_HELPER(daoreg,
-    (reset)(create)(update)(delorg)(setparam)(resetsttngs)(upsertattrs)(delattrs)(addtoken))
-  }
-}
+

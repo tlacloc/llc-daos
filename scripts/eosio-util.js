@@ -83,6 +83,17 @@ async function getAccountBalance (contract, account, token) {
   return Number.parseFloat(balance[0]) || 0
 }
 
+async function randomAccountName() {
+  let length = 12
+  var result = ''
+  var characters = 'abcdefghijklmnopqrstuvwxyz1234'
+  var charactersLength = characters.length
+  for (var i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength))
+  }
+  return result
+}
+
 module.exports = {
-  getContracts, initContract, getAccountBalance
+  getContracts, initContract, getAccountBalance, randomAccountName
 }

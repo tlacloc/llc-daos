@@ -1,6 +1,6 @@
 #include <daoreg.hpp>
 
-ACTION daoreg::reset() {
+ACTION daoreg::reset(std::vector<name> users) {
 
   require_auth(get_self());
 
@@ -9,6 +9,14 @@ ACTION daoreg::reset() {
   auto daoit = _dao.begin();
   while (daoit != _dao.end()) {
     daoit = _dao.erase(daoit);
+  }
+
+  for (auto const& itr : users) {
+    balances_table _balances(get_self(), itr.value);
+    auto it = _balances.begin();
+    while(it != _balances.end()){
+      it = _balances.erase(it);
+    }
   }
 }
 
@@ -24,7 +32,7 @@ ACTION daoreg::create(const name& dao, const name& creator, const std::string& i
 
   _dao.emplace(get_self(), [&](auto& new_org){
     uint64_t dao_id = _dao.available_primary_key();
-    dao_id = dao_id == 0 ? 1 : dao_id;
+    dao_id = dao_id > 0 ? dao_id : 1;
     new_org.dao_id = dao_id;
     new_org.dao = dao;
     new_org.creator = creator;
@@ -185,3 +193,93 @@ ACTION daoreg::addtoken(const uint64_t &dao_id, const name &token_contract, cons
     dao.tokens.push_back(std::pair(token_contract, token));
   });
 }
+
+void daoreg::deposit(const name& from, const name& to, const asset& quantity, const std::string& memo) {
+
+  if(to == get_self()) {
+    check(!memo.empty(), "Memo can not be empty, especify dao_id");
+
+    int64_t dao_id;
+    name token_account;
+    bool token_is_registered = false;
+
+    dao_id = stoi(memo);
+    check(dao_id >= 0, "Dao id has to be a positive number");
+    symbol token_symbol = quantity.symbol;
+
+    dao_table _dao(get_self(), get_self().value);
+
+    if(dao_id == 0) {
+
+      for (auto& itr : system_tokens) {
+        if (itr.first == get_first_receiver() && itr.second == token_symbol) {
+          token_is_registered = true;
+          token_account = itr.first;
+          break;
+        }             
+      }
+      check(token_is_registered, "This is not a supported system token");
+    } else {
+      auto daoit = _dao.find(dao_id);
+      check(daoit != _dao.end(), "Organization not found");
+      auto dao_tokens = daoit->tokens;
+
+      for (auto& itr : dao_tokens) {
+        if (itr.first == get_first_receiver() && itr.second == token_symbol) {
+          token_is_registered = true;
+          token_account = itr.first;
+          break;
+        }
+      }
+      check(token_is_registered, "Token is not supported by a registred Dao");
+    }
+
+    balances_table _balances(get_self(), from.value);
+
+    auto balances_by_token_account_token = _balances.get_index<name("bytkaccttokn")>();
+    auto itr = balances_by_token_account_token.find((uint128_t(token_account.value) << 64) + token_symbol.raw());
+
+    if (itr == balances_by_token_account_token.end()) {
+      _balances.emplace(get_self(), [&](auto& user){
+        user.id = _balances.available_primary_key();
+        user.available = quantity;
+        user.locked = asset(0, token_symbol);
+        user.dao_id = dao_id;
+        user.token_account = token_account;
+      });
+    } else {
+      balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
+        user.available += quantity;
+      });
+    }
+  }
+}
+
+ACTION daoreg::withdraw(const name &account, const name &token_account, const asset &quantity) {
+  check(quantity.amount > 0, "Amount to withdraw has to be higher than zero");
+  require_auth(account);
+
+  balances_table _balances(get_self(), account.value);
+  symbol token_symbol = quantity.symbol;
+
+  auto balances_by_token_account_token = _balances.get_index<name("bytkaccttokn")>();
+  auto itr = balances_by_token_account_token.find((uint128_t(token_account.value) << 64) + token_symbol.raw());
+
+  check(itr != balances_by_token_account_token.end(), "Token account and symbol are not registered in your account");
+  check(itr->available >= quantity, "You do not have enough balance");
+
+  balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
+    user.available -= quantity;
+  });
+
+  action(
+      permission_level{get_self(), name("active")},
+      token_account,
+      "transfer"_n,
+      std::make_tuple(get_self(), account, quantity, string("withdraw from here"))
+  ).send();
+
+}
+
+
+

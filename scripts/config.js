@@ -59,7 +59,8 @@ const contractsConfig = {
   [supportedChains.local]: [
     contract('nullcontract', 'm1nulldaos'),
     contract('daoreg', 'daoregistry1'),
-    contract('daoinf', 'daoinfor1111')
+    contract('daoinf', 'daoinfor1111'),
+    contract('tlostoken', 'tlostoken1')
   ],
   [supportedChains.telosTestnet]: [
     contract('daoreg', 'daoregistry1'),
