@@ -328,6 +328,8 @@ ACTION daoreg::acceptoffer (const uint64_t & dao_id, const name & account, const
   auto ofit = offer_t.find(offer_id);
   check(ofit != offer_t.end(), "Offer not found");
 
+  check(ofit->status == util::status_active, "Offer is not active");
+
 
   asset cost = asset(ofit->available_quantity.amount * ofit->price_per_unit.amount, ofit->price_per_unit.symbol);
   has_enough_balance(dao_id, account, cost);
@@ -343,6 +345,7 @@ ACTION daoreg::acceptoffer (const uint64_t & dao_id, const name & account, const
 
   offer_t.modify(ofit, get_self(), [&](auto& item){
     item.available_quantity = asset(0, ofit-> available_quantity.symbol);
+    item.status = util::status_closed;
   });
 
 }
