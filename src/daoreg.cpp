@@ -255,7 +255,7 @@ void daoreg::deposit(const name& from, const name& to, const asset& quantity, co
   }
 }
 
-ACTION daoreg::withdraw(const name &account, const name &token_account, const asset &quantity) {
+ACTION daoreg::withdraw ( const name &account, const name &token_account, const asset &quantity ) {
   check(quantity.amount > 0, "Amount to withdraw has to be higher than zero");
   require_auth(account);
 
@@ -281,5 +281,189 @@ ACTION daoreg::withdraw(const name &account, const name &token_account, const as
 
 }
 
+ACTION daoreg::createoffer ( const uint64_t & dao_id, const name & creator, const asset & quantity, const asset & price_per_unit, const uint8_t & type) {
+
+  require_auth(creator);
+
+  token_exists(dao_id, quantity);
+  has_enough_balance(dao_id, creator, quantity);
+
+  offers_table offer_t(get_self(), get_self().value);
+
+  // check if there is another offer that issues the inverse
+
+  offer_t.emplace(get_self(), [&](auto & item){
+    item.offer_id = offer_t.available_primary_key();
+    item.creator = creator;
+    item.available_quantity = quantity;
+    item.total_quantity = quantity;
+    item.price_per_unit = price_per_unit; // always in TLOS  tlostoken
+    item.status = util::status_active;
+    item.timestamp = current_time_point();
+    item.type = type;
+  });
+}
 
 
+ACTION daoreg::removeoffer (const uint64_t & dao_id, const uint64_t & offer_id) {
+  
+  offers_table offer_t(get_self(), dao_id);
+
+  auto ofit = offer_t.find(offer_id);
+  check(ofit != offer_t.end(), "Offer not found");
+
+  require_auth(ofit->creator);
+
+  offer_t.erase(ofit);
+
+}
+
+
+ACTION daoreg::acceptoffer (const uint64_t & dao_id, const name & account, const uint64_t & offer_id) {
+
+  require_auth(account);
+
+  offers_table offer_t(get_self(), dao_id);
+
+  auto ofit = offer_t.find(offer_id);
+  check(ofit != offer_t.end(), "Offer not found");
+
+
+  asset cost = asset(ofit->available_quantity.amount * ofit->price_per_unit.amount, ofit->price_per_unit.symbol);
+  has_enough_balance(dao_id, account, cost);
+
+  if (ofit->type == util::type_sell_offer) {
+    transfer(account, ofit->creator, cost, dao_id);
+    transfer(ofit->creator, account, ofit->available_quantity, dao_id);
+
+  } else if (ofit->type == util::type_buy_offer) {
+    transfer(ofit->creator, account, cost, dao_id);
+    transfer(account, ofit->creator, ofit->available_quantity, dao_id);
+  } 
+
+  offer_t.modify(ofit, get_self(), [&](auto& item){
+    item.available_quantity = asset(0, ofit-> available_quantity.symbol);
+  });
+
+}
+
+void daoreg::transfer(const name & from, const name & to, const asset & quantity, const uint64_t & dao_id) {
+
+  check(quantity.amount > 0, "Amount to transfer has to be higher than zero");
+  require_auth(from);
+
+  token_exists(dao_id, quantity);
+  name token_account = get_token_account(dao_id, quantity);
+
+  balances_table _balances(get_self(), from.value);
+  symbol token_symbol = quantity.symbol;
+
+  auto balances_by_token_account_token = _balances.get_index<name("bytkaccttokn")>();
+  auto itr = balances_by_token_account_token.find((uint128_t(token_account.value) << 64) + token_symbol.raw());
+
+  check(itr != balances_by_token_account_token.end(), "Token account and symbol are not registered in your account");
+  check(itr->available >= quantity, "You do not have enough balance");
+
+  balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
+    user.available -= quantity;
+  });
+
+
+  balances_table _balancesTo(get_self(), to.value);
+
+  auto balances_by_token_account_tokenTo = _balancesTo.get_index<name("bytkaccttokn")>();
+  auto bitr = balances_by_token_account_tokenTo.find((uint128_t(token_account.value) << 64) + token_symbol.raw());
+
+  check(bitr != balances_by_token_account_tokenTo.end(), "Token account and symbol are not registered in your account");
+  check(bitr->available >= quantity, "You do not have enough balance");
+
+  balances_by_token_account_tokenTo.modify(bitr, get_self(), [&](auto& user){
+    user.available += quantity;
+  });
+
+}
+void daoreg::token_exists(const uint64_t & dao_id, const asset & quantity) {
+  symbol token_symbol = quantity.symbol;
+
+  bool token_is_registered = false;
+
+  dao_table _dao(get_self(), get_self().value);
+
+  if(dao_id == 0) {
+
+      for (auto& itr : system_tokens) {
+        if (itr.first == get_first_receiver() && itr.second == token_symbol) {
+          token_is_registered = true;
+          break;
+        }             
+      }
+      check(token_is_registered, "This is not a supported system token");
+    } else {
+      auto daoit = _dao.find(dao_id);
+      check(daoit != _dao.end(), "Organization not found");
+      auto dao_tokens = daoit->tokens;
+
+      for (auto& itr : dao_tokens) {
+        if (itr.first == get_first_receiver() && itr.second == token_symbol) {
+          token_is_registered = true;
+          break;
+        }
+      }
+      check(token_is_registered, "Token is not supported by a registred Dao");
+    }
+}
+
+void daoreg::has_enough_balance(const uint64_t & dao_id, const name & account, const asset & quantity) {
+  
+  token_exists(dao_id, quantity);
+  name token_account = get_token_account(dao_id, quantity);
+
+  balances_table _balances(get_self(), account.value);
+  symbol token_symbol = quantity.symbol;
+
+  auto balances_by_token_account_token = _balances.get_index<name("bytkaccttokn")>();
+  auto itr = balances_by_token_account_token.find((uint128_t(token_account.value) << 64) + token_symbol.raw());
+
+  check(itr != balances_by_token_account_token.end(), "Token account and symbol are not registered in your account");
+  check(itr->available >= quantity, "You do not have enough balance");
+
+}
+
+name daoreg::get_token_account(const uint64_t & dao_id, const asset & quantity) {
+
+  name token_account;
+  bool token_is_registered = false;
+
+  check(dao_id >= 0, "Dao id has to be a positive number");
+  symbol token_symbol = quantity.symbol;
+
+  dao_table _dao(get_self(), get_self().value);
+
+  if(dao_id == 0) {
+
+    for (auto& itr : system_tokens) {
+      if (itr.first == get_first_receiver() && itr.second == token_symbol) {
+        token_is_registered = true;
+        token_account = itr.first;
+        break;
+      }             
+    }
+    check(token_is_registered, "This is not a supported system token");
+  } else {
+    auto daoit = _dao.find(dao_id);
+    check(daoit != _dao.end(), "Organization not found");
+    auto dao_tokens = daoit->tokens;
+
+    for (auto& itr : dao_tokens) {
+      if (itr.first == get_first_receiver() && itr.second == token_symbol) {
+        token_is_registered = true;
+        token_account = itr.first;
+        break;
+      }
+    }
+    check(token_is_registered, "Token is not supported by a registred Dao");
+  }
+
+  return token_account;
+
+}
