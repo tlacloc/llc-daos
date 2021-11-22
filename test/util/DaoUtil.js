@@ -1,10 +1,5 @@
 const { createRandomAccount } = require('../../scripts/eosio-util')
 
-const DaoConstants = {
-  sell: 0,
-  buy: 1,
-}
-
 class Dao {
 
   constructor (
@@ -21,17 +16,10 @@ class Dao {
 
   getActionParams () {
 
-    let dao
-    if (this.params.dao) {
-      dao = this.params.dao
-    } else {
-      dao = await createRandomAccount() 
-    }
-
     return [
-      this.dao,
-      this.creator,
-      this.ipfs
+      this.params.dao,
+      this.params.creator,
+      this.params.ipfs
     ]
   }
 
@@ -44,10 +32,11 @@ class DaosFactory {
     creator,
     ipfs
   }) {
-    return new Dao(
+    return new Dao (
       dao,
       creator,
       ipfs
+    )
   }
 
   static async createWithDefaults ({
@@ -65,7 +54,7 @@ class DaosFactory {
     }
 
     if (!ipfs) {
-      quantity = "ipfs://xyz"
+      ipfs = "ipfs://xyz"
     }
 
     return ReferendumsFactory.createEntry({
@@ -77,4 +66,4 @@ class DaosFactory {
 
 }
 
-module.exports = { Dao, DaosFactory, DaoConstants }
+module.exports = { Dao, DaosFactory }

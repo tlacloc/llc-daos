@@ -57,7 +57,7 @@ class OffersFactory {
       creator,
       quantity,
       price_per_unit,
-      type
+      type)
   }
 
   static async createWithDefaults ({
