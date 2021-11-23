@@ -2,7 +2,7 @@ const { assertError } = require('../../scripts/eosio-errors')
 
 class TokenUtil {
 
-  static tokenCode = 'BANK'
+  static tokenCode = 'TLOS'
   static tokenPrecision = 4
 
   static async create ({ issuer, maxSupply, contractAccount, contract }) {
@@ -23,7 +23,7 @@ class TokenUtil {
 
   static async createFromDao ({dao_id, token_contract, token, daoCreator, contract}) {
     try {
-      await contract.addtoken(dao_id, token_contract, token, , { authorization: `${daoCreator}@active` })
+      await contract.addtoken(dao_id, token_contract, token, { authorization: `${daoCreator}@active` })
     } catch (error) {
       assertError({
         error,
