@@ -1,20 +1,33 @@
-const { createRandomAccount } = require('../../scripts/eosio-util')
+const { createRandomAccount, randomAccountName } = require('../../scripts/eosio-util')
 
 class Dao {
 
   constructor (
     dao,
     creator,
-    ipfs
+    ipfs,
+    attributes,
+    tokens
   ) {
     this.params = {
       dao,
       creator,
-      ipfs
+      ipfs,
+      attributes,
+      tokens
     }
   }
 
   getActionParams () {
+
+    return [
+      this.params.dao,
+      this.params.creator,
+      this.params.ipfs
+    ]
+  }
+
+  getActionCreateParams () {
 
     return [
       this.params.dao,
@@ -30,19 +43,25 @@ class DaosFactory {
   static createEntry ({
     dao,
     creator,
-    ipfs
+    ipfs,
+    attributes,
+    tokens
   }) {
     return new Dao (
       dao,
       creator,
-      ipfs
+      ipfs,
+      attributes,
+      tokens
     )
   }
 
   static async createWithDefaults ({
     dao,
     creator,
-    ipfs
+    ipfs,
+    attributes,
+    tokens
 
   }) {
     if (!dao) {
@@ -54,13 +73,23 @@ class DaosFactory {
     }
 
     if (!ipfs) {
-      ipfs = "ipfs://xyz"
+      ipfs = "ipfs://Qm" + await randomAccountName()
     }
 
-    return ReferendumsFactory.createEntry({
+    if (!attributes) {
+      attributes = []
+    }
+
+    if (!tokens) {
+      tokens = []
+    }
+
+    return DaosFactory.createEntry({
       dao,
       creator,
-      ipfs
+      ipfs,
+      attributes,
+      tokens
     })
   }
 

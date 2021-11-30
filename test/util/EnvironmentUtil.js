@@ -3,6 +3,8 @@ const { promisify } = require('util')
 
 const { createAccount, deployContract } = require('../../scripts/deploy')
 const { accountExists, contractRunningSameCode } = require('../../scripts/eosio-errors')
+const { initContract, randomAccountName } = require('../../scripts/eosio-util')
+
 const { devKey } = require('../../scripts/config')
 
 const execCommand = promisify(exec)

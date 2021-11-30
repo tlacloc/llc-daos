@@ -75,18 +75,18 @@ class OffersFactory {
     }
 
     if (!quantity) {
-      quantity = "90.0000 DTK"
+      quantity = "1.0000 DTK"
     }
 
     if (!price_per_unit) {
-      price_per_unit = "60.0000 TLOS"
+      price_per_unit = "1.0000 TLOS"
     }
 
     if (!type) {
       type = 1 // type_buy_offer by default
     }
 
-    return ReferendumsFactory.createEntry({
+    return OffersFactory.createEntry({
       daoId,
       creator,
       quantity,
