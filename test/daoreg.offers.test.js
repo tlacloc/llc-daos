@@ -1,6 +1,6 @@
 const assert = require('assert')
 const { rpc } = require('../scripts/eos')
-const { getContracts, createRandomAccount, initContract, Asset } = require('../scripts/eosio-util')
+const { getContracts, createRandomAccount, Asset } = require('../scripts/eosio-util')
 const { assertError } = require('../scripts/eosio-errors')
 
 const { contractNames, contracts: configContracts, isLocalNode, sleep } = require('../scripts/config')
@@ -21,7 +21,9 @@ const expect = require('chai').expect
 
 const { daoreg, tlostoken } = contractNames
 
-describe('Tests for tokens in dao registry', async function () {
+
+
+describe('Tests for offers in dao registry', async function () {
 
   let contracts
 
@@ -58,30 +60,13 @@ describe('Tests for tokens in dao registry', async function () {
 
   })
 
-  it('Create a new token', async function () {
+  it('Create a new offer', async function () {
 
   	// Arrange
-    const [token_contract, contractAccount] = await TokenUtil.createTokenContract();
-
-    // Act
-    await TokenUtil.create({ 
-      issuer: daoreg, 
-      maxSupply: `1000000000000.0000 DTK`,
-      contractAccount: contractAccount,
-      contract: token_contract
-    })
-
-    // Assert
-
-  })
-
-  it('Add a new token in a DAO', async function () {
-
-    // Arrange
-    const dao = await DaosFactory.createWithDefaults({dao: 'firstdao'})
+    const dao = await DaosFactory.createWithDefaults({ })
     const actionParams = dao.getActionParams()
 
-    await contracts.daoreg.create(...actionParams, { authorization: `${dao.params.creator}@active` })
+    await contracts.daoreg.create(...actionParams, { authorization: `${dao.params.dao}@active` })
 
     const [token_contract, token_account] = await TokenUtil.createTokenContract();
 
@@ -92,7 +77,6 @@ describe('Tests for tokens in dao registry', async function () {
       contract: token_contract
     })
 
-    // Act
     await TokenUtil.createFromDao({ 
       dao_id: 1, 
       token_contract: token_account,
@@ -101,22 +85,29 @@ describe('Tests for tokens in dao registry', async function () {
       contract: contracts.daoreg
     })
 
-    // Assert
-    const daoTable = await rpc.get_table_rows({
-      code: daoreg,
-      scope: daoreg,
-      table: 'daos',
-      json: true,
-      limit: 100
-    })
 
-    expect(daoTable.rows).to.deep.equals([{
-      dao_id: 1,
+    const offer = await OffersFactory.createWithDefaults({})
+    const actionOfferCreateParams = offer.getActionParams()
+
+    // Act
+    await contracts.daoreg.createoffer(...actionOfferCreateParams, { authorization: `${dao.params.creator}@active` })
+
+    // Assert
+    const offerTable = await rpc.get_table_rows({
+      code: daoreg,
+		  scope: daoreg,
+	    table: 'offers',
+      json: true,
+		  limit: 100
+  	})
+
+  	expect(daoTable.rows).to.deep.equals([{
+  		dao_id: 1,
       dao: dao.params.dao,
       creator: dao.params.creator,
       ipfs: dao.params.ipfs,
       attributes: dao.params.attributes,
-      tokens: [{"first": token_account, "second": "4,DTK"}]
+      tokens: dao.params.tokens
     }])
 
   })
