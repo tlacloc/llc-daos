@@ -33,11 +33,11 @@ class Offer {
     }
 
     return [
-      this.daoId,
-      this.creator,
-      this.quantity,
-      this.price_per_unit,
-      this.type
+      this.params.daoId,
+      this.params.creator,
+      this.params.quantity,
+      this.params.price_per_unit,
+      this.params.type
     ]
   }
 
