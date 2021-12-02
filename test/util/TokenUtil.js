@@ -1,3 +1,7 @@
+const assert = require('assert')
+
+const { rpc } = require('../../scripts/eos')
+
 const { assertError } = require('../../scripts/eosio-errors')
 const { createRandomAccount, randomAccountName, initContract} = require('../../scripts/eosio-util')
 const { createAccount, deployContract } = require('../../scripts/deploy')
@@ -25,8 +29,8 @@ class TokenUtil {
     await contract.issue(issuer, amount, 'issued token', { authorization: `${issuer}@active` })
   }
 
-  static async transfer ({ amount, sender, reciever, contract }) {
-    await contract.transfer(sender, reciever, amount, '', { authorization: `${sender}@active`})
+  static async transfer ({ amount, sender, reciever, dao_id,contract }) {
+    await contract.transfer(sender, reciever, amount, dao_id, { authorization: `${sender}@active`})
   }
 
   static async createFromDao ({ dao_id, token_contract, token_symbol, daoCreator, contract }) {
@@ -56,6 +60,35 @@ class TokenUtil {
     const token_contract = await initContract(account)
     return [ token_contract, account ]
   }
+
+  static async checkBalance ({code, scope, table, balance_available, balance_locked, id, dao_id, token_account}) {
+      const _table = await rpc.get_table_rows({
+          code,
+          scope,
+          table: table,
+          json: true,
+          limit: 100
+      })
+      
+      if(table == 'balances') {
+          assert.deepStrictEqual(_table.rows, [
+              {
+                  id,
+                  available: balance_available,
+                  locked: balance_locked,
+                  dao_id,
+                  token_account
+              }
+          ])
+      } else if (table == 'accounts') {
+          assert.deepStrictEqual(_table.rows, [
+              {
+                  balance: balance_available
+              }
+          ])
+      }
+  }
+
 
 }
 
