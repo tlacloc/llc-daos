@@ -29,7 +29,7 @@ class TokenUtil {
     await contract.issue(issuer, amount, 'issued token', { authorization: `${issuer}@active` })
   }
 
-  static async transfer ({ amount, sender, reciever, dao_id,contract }) {
+  static async transfer ({ amount, sender, reciever, dao_id, contract }) {
     await contract.transfer(sender, reciever, amount, dao_id, { authorization: `${sender}@active`})
   }
 
@@ -43,6 +43,22 @@ class TokenUtil {
         verbose: false
       })
     }
+  }
+
+  static async initToken({token_contract, token_account, issuer, max_supply, issue_amount, transfer_amount }) {
+    await this.create ({
+      issuer: issuer,
+      maxSupply: max_supply,
+      contractAccount: token_account,
+      contract: token_contract
+    })
+
+    await this.issue ({
+      amount: issue_amount, 
+      issuer: issuer, 
+      contract: token_contract
+    })
+
   }
 
   static async createTokenContract() {
