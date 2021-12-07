@@ -21,37 +21,65 @@ CONTRACT daoreg : public contract {
 
     ACTION reset(std::vector<name> users);
 
-    ACTION create(const name& dao, const name& creator, const std::string& ipfs);
+    ACTION create(
+      const name & dao, 
+      const name & creator, 
+      const std::string & ipfs);
 
-    ACTION update(const uint64_t &dao_id, const std::string &ipfs);
+    ACTION update(
+      const uint64_t & dao_id, 
+      const std::string & ipfs);
 
-    ACTION delorg(const uint64_t &dao_id);
+    ACTION delorg(
+      const uint64_t & dao_id);
 
-    ACTION setparam(name key, VariantValue value, string description); 
+    ACTION setparam(
+      name key, 
+      VariantValue value, 
+      string description); 
 
     ACTION resetsttngs();
 
-    ACTION upsertattrs(const uint64_t &dao_id, std::vector<std::pair<std::string, VariantValue>> attributes);
+    ACTION upsertattrs(
+      const uint64_t & dao_id, 
+      std::vector<std::pair<std::string, VariantValue>> attributes);
 
-    ACTION delattrs(const uint64_t &dao_id, std::vector<std::string> attributes);
+    ACTION delattrs(
+      const uint64_t & dao_id, 
+      std::vector<std::string> attributes);
 
-    ACTION addtoken(const uint64_t &dao_id, const name &token_contract, const symbol &token);
+    ACTION addtoken(
+      const uint64_t & dao_id, 
+      const name & token_contract, 
+      const symbol & token);
 
     [[eosio::on_notify("*::transfer")]] 
-    void deposit(const name& from, const name& to, const asset& quantity, const std::string& memo);
+    void deposit(
+      const name & from, 
+      const name & to, 
+      const asset & quantity, 
+      const std::string & memo);
         
-    ACTION withdraw(const name &account, const name &dao, const asset &quantity);
+    ACTION withdraw(
+      const name & account, 
+      const name & dao, 
+      const asset & quantity);
 
     ACTION createoffer (
-        const uint64_t & dao_id, 
-        const name & creator, 
-        const asset & quantity, 
-        const asset & price_per_unit, 
-        const uint8_t & type);
+      const uint64_t & dao_id, 
+      const name & creator, 
+      const asset & quantity, 
+      const asset & price_per_unit, 
+      const uint8_t & type);
 
-    ACTION removeoffer (const uint64_t & dao_id, const uint64_t & offer_id);
+    ACTION removeoffer (
+      const uint64_t & dao_id, 
+      const uint64_t & offer_id);
 
-    ACTION acceptoffer (const uint64_t & dao_id, const name & account, const uint64_t & offer_id);
+    ACTION acceptoffer (
+      const uint64_t & dao_id, 
+      const name & account,
+      const uint64_t & offer_id);
 
   private:
 
@@ -66,11 +94,38 @@ CONTRACT daoreg : public contract {
 
     std::vector<std::pair<name, symbol>> system_tokens = {{name("eosio.token"), symbol("TLOS", 4)}};
 
-    void token_exists(const uint64_t & dao_id, const asset & quantity);
-    void has_enough_balance(const uint64_t & dao_id, const name & account, const asset & quantity);
-    void transfer(const name & from, const name & to, const asset & quantity, const uint64_t & dao_id);
+    void token_exists(
+      const uint64_t & dao_id, 
+      const asset & quantity);
 
-    name get_token_account(const uint64_t & dao_id, const asset & quantity);
+    void has_enough_balance(
+      const uint64_t & dao_id, 
+      const name & account, 
+      const asset & quantity);
+
+    void transfer(
+      const name & from, 
+      const name & to, 
+      const asset & quantity, 
+      const uint64_t & dao_id);
+
+    void createbuyoffer ( 
+      const uint64_t & dao_id, 
+      const name & creator, 
+      const asset & quantity, 
+      const asset & price_per_unit,
+      const uint8_t & token_id);
+
+    void createselloffer ( 
+      const uint64_t & dao_id, 
+      const name & creator, 
+      const asset & quantity, 
+      const asset & price_per_unit,
+      const uint8_t & token_id);
+
+    name get_token_account(
+      const uint64_t & dao_id, 
+      const symbol & token_symbol);
 
     TABLE daos {
       uint64_t dao_id;
@@ -108,6 +163,23 @@ CONTRACT daoreg : public contract {
       const_mem_fun<balances, uint128_t, &balances::by_token_account_token>>
     >balances_table;
 
+    TABLE tokens { // scoped by dao_id
+      uint8_t token_id;
+      name token_account;
+      symbol token_symbol;
+
+      uint8_t primary_key () const { return token_id; }
+      uint64_t by_token_account () const { return uint64_t(token_account.value);  }
+      uint64_t by_token_symbol () const { return token_symbol.raw(); }
+    };
+
+    typedef multi_index<name("tokens"), tokens,
+      indexed_by<name("bytknaccount"),
+      const_mem_fun<tokens, uint64_t, &tokens::by_token_account>>,
+      indexed_by<name("bytknsymbol"),
+      const_mem_fun<tokens, uint64_t, &tokens::by_token_symbol>>
+    >tokens_table;
+
     TABLE offers {  // scoped by dao_id
       uint64_t offer_id;
       name creator;
@@ -126,8 +198,9 @@ CONTRACT daoreg : public contract {
       uint128_t by_offer_match () const {
          return
              (uint128_t(type) << 125) + (uint128_t(status) << 123) 
-             + (uint128_t(price_per_unit.amount) << 56 ) 
-             + uint128_t(0xFFFFFFFFFFFFFF) & (uint128_t(std::numeric_limits<uint64_t>::max() - timestamp.sec_since_epoch() )); }  
+             + (uint128_t(price_per_unit.amount) << 64 ) 
+             //+ (uint128_t(token_idx) << 53 )
+             + (uint128_t(0xFFFFFFFFFFFFFF) & (uint128_t(std::numeric_limits<uint64_t>::max() - timestamp.sec_since_epoch())) ); }  
     };
 
     typedef multi_index<name("offers"), offers,
