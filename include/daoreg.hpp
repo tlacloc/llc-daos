@@ -123,6 +123,14 @@ CONTRACT daoreg : public contract {
       const asset & price_per_unit,
       const uint8_t & token_id);
 
+    void storeoffer ( 
+      const uint64_t & dao_id, 
+      const name & creator, 
+      const asset & quantity, 
+      const asset & price_per_unit,
+      const uint8_t & token_id,
+      const uint8_t & type);
+
     name get_token_account(
       const uint64_t & dao_id, 
       const symbol & token_symbol);
@@ -197,10 +205,11 @@ CONTRACT daoreg : public contract {
 
       uint128_t by_offer_match () const {
          return
-             (uint128_t(type) << 125) + (uint128_t(status) << 123) 
-             + (uint128_t(price_per_unit.amount) << 64 ) 
+            (uint128_t(type) << 64) + (uint128_t(status));
+             // + (uint128_t(price_per_unit.amount) << 64 ) 
              //+ (uint128_t(token_idx) << 53 )
-             + (uint128_t(0xFFFFFFFFFFFFFF) & (uint128_t(std::numeric_limits<uint64_t>::max() - timestamp.sec_since_epoch())) ); }  
+             // + (uint128_t(0xFFFFFFFFFFFFFF) & (uint128_t(std::numeric_limits<uint64_t>::max() - timestamp.sec_since_epoch()))  
+            }  
     };
 
     typedef multi_index<name("offers"), offers,

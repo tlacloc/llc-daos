@@ -32,6 +32,13 @@ class Offer {
       daoId = 1
     }
 
+    let type
+    if (this.params.type) {
+      type = this.params.type
+    } else {
+      type = 1
+    }
+
     return [
       this.params.daoId,
       this.params.creator,
@@ -82,9 +89,7 @@ class OffersFactory {
       price_per_unit = "1.0000 TLOS"
     }
 
-    if (!type) {
-      type = 1 // type_buy_offer by default
-    }
+    type = !type ? type : 1
 
     return OffersFactory.createEntry({
       daoId,

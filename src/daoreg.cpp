@@ -326,24 +326,15 @@ ACTION daoreg::createoffer (
 
 }
 
-void daoreg::createbuyoffer ( 
+void daoreg::storeoffer ( 
   const uint64_t & dao_id, 
   const name & creator, 
   const asset & quantity, 
   const asset & price_per_unit,
-  const uint8_t & token_id) {
+  const uint8_t & token_id,
+  const uint8_t & type) {
 
-  offers_table offer_t(get_self(), get_self().value);
-
-  auto by_offer_match = offer_t.get_index<eosio::name("byoffermatch")>();
-
-  // offer match
-  auto soitr_buy = by_offer_match.lower_bound( (uint128_t(util::type_sell_offer) << 125) +  
-    (uint128_t(util::status_active) << 123)  + (uint128_t(price_per_unit.amount) << 64 )  + (uint128_t(token_id) << 53)  ) ;
-
-  if (soitr_buy == by_offer_match.end()) {
-
-    offers_table offer_t(get_self(), dao_id);
+  offers_table offer_t(get_self(), dao_id);
 
     offer_t.emplace(get_self(), [&](auto & item){
       item.offer_id = offer_t.available_primary_key();
@@ -353,14 +344,53 @@ void daoreg::createbuyoffer (
       item.price_per_unit = price_per_unit; // always in TLOS  tlostoken
       item.status = util::status_active;
       item.timestamp = current_time_point();
-      item.type = util::type_buy_offer;
+      item.type = type;
       item.token_idx = token_id;
-      item.match_id = (uint128_t(util::type_buy_offer) << 125) + (uint128_t(util::status_active) << 123) 
-                      + (uint128_t(price_per_unit.amount) << 64 ) 
-                      + (uint128_t(0xFFFFFFFFFFFFFF) &  (uint128_t(std::numeric_limits<uint64_t>::max() - current_time_point().sec_since_epoch()) ));
+      item.match_id = (uint128_t(type) << 64) + (uint128_t(util::status_active));
+                      // + (uint128_t(price_per_unit.amount) << 64 ) 
+                      // + (uint128_t(0xFFFFFFFFFFFFFF) &  (uint128_t(std::numeric_limits<uint64_t>::max() - current_time_point().sec_since_epoch())));
     });
+
+
+}
+
+void daoreg::createbuyoffer ( 
+  const uint64_t & dao_id, 
+  const name & creator, 
+  const asset & quantity, 
+  const asset & price_per_unit,
+  const uint8_t & token_id) {
+
+  /*
+  dao_table _dao(get_self(), get_self().value);
+  auto dao_by_id = _dao.get_index<name("bydaodaoid")>();
+  auto daoit = dao_by_id.lower_bound(uint128_t(dao.value) << 64);
+
+  check(daoit == dao_by_id.end(), "dao with the same name already exists");
+  */
+
+  offers_table offer_t(get_self(), dao_id);
+  auto by_offer_match = offer_t.get_index<eosio::name("byoffermatch")>();
+
+  // offer match
+  auto soitr_buy = by_offer_match.find( (uint128_t(util::type_sell_offer) << 64) 
+   + (uint128_t(util::status_active)) 
+    // + (uint128_t(price_per_unit.amount) << 64 )  + (uint128_t(token_id) << 53)  
+    ) ;
+
+  if (soitr_buy == by_offer_match.end()) {
+
+    storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::type_buy_offer);
+
   } else {
-    print("offer found!");
+
+    action(
+      permission_level{creator, name("active")},
+      _self,
+      "acceptoffer"_n,
+      std::make_tuple(dao_id, creator, soitr_buy->offer_id)
+    ).send();
+
   }
 }
 
@@ -371,35 +401,24 @@ void daoreg::createselloffer (
   const asset & price_per_unit,
   const uint8_t & token_id) {
 
-  offers_table offer_t(get_self(), get_self().value);
+  offers_table offer_t(get_self(), dao_id);
 
   auto by_offer_match = offer_t.get_index<eosio::name("byoffermatch")>();
 
   // offer match
-  auto boitr_sell = by_offer_match.lower_bound( (uint128_t(util::type_buy_offer) << 125) +  
-    (uint128_t(util::status_active) << 123)  + (uint128_t(price_per_unit.amount) << 64 )  + (uint128_t(token_id) << 53) ) ;
+  auto boitr_sell = by_offer_match.find( (uint128_t(util::type_buy_offer) << 64) 
+     + (uint128_t(util::status_active))
+    // + (uint128_t(price_per_unit.amount) << 64 )  + (uint128_t(token_id) << 53)
+    );
 
   if (boitr_sell == by_offer_match.end()) {
 
-    offers_table offer_t(get_self(), dao_id);
-
-    offer_t.emplace(get_self(), [&](auto & item){
-      item.offer_id = offer_t.available_primary_key();
-      item.creator = creator;
-      item.available_quantity = quantity;
-      item.total_quantity = quantity;
-      item.price_per_unit = price_per_unit; // always in TLOS  tlostoken
-      item.status = util::status_active;
-      item.timestamp = current_time_point();
-      item.type = util::type_sell_offer;
-      item.token_idx = token_id;
-      item.match_id = (uint128_t(util::type_sell_offer) << 125) + (uint128_t(util::status_active) << 123) 
-                      + (uint128_t(price_per_unit.amount) << 64 ) 
-                      + (uint128_t(0xFFFFFFFFFFFFFF) &  (uint128_t(std::numeric_limits<uint64_t>::max() - current_time_point().sec_since_epoch()) ));
-    });
+    storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::type_sell_offer);
 
   } else {
+
     print("offer found!");
+
   }
   
 }
