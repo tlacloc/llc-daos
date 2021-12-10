@@ -86,7 +86,7 @@ class OffersFactory {
     }
 
     if (!price_per_unit) {
-      price_per_unit = "1.0000 TLOS"
+      price_per_unit = "0.1000 TLOS"
     }
 
     type = !type ? type : 1

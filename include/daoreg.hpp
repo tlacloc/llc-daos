@@ -103,6 +103,33 @@ CONTRACT daoreg : public contract {
       const name & account, 
       const asset & quantity);
 
+    void resolver_buyer(
+      const uint64_t & dao_id,
+      const uint8_t & offer_id,
+      const name & issuer);
+
+    void resolver_seller(
+      const uint64_t & dao_id,
+      const uint8_t & offer_id,
+      const name & issuer);
+
+    void send_transfer(
+      const name & beneficiary, 
+      const asset & quantity, 
+      const std::string & memo, 
+      const name & token_account);
+
+    void send_transfer(
+      const name & sender,
+      const name & beneficiary, 
+      const asset & quantity, 
+      const std::string & memo, 
+      const name & token_account);
+
+    void close_offer(
+      const uint64_t & dao_id,
+      const uint8_t & offer_id);
+
     void transfer(
       const name & from, 
       const name & to, 
@@ -129,6 +156,7 @@ CONTRACT daoreg : public contract {
       const asset & quantity, 
       const asset & price_per_unit,
       const uint8_t & token_id,
+      const uint8_t & status,
       const uint8_t & type);
 
     name get_token_account(
@@ -205,7 +233,8 @@ CONTRACT daoreg : public contract {
 
       uint128_t by_offer_match () const {
          return
-            (uint128_t(type) << 64) + (uint128_t(status));
+            ( uint128_t(0xF &type) << 124) 
+            + (uint128_t(0xF & status) << 120);
              // + (uint128_t(price_per_unit.amount) << 64 ) 
              //+ (uint128_t(token_idx) << 53 )
              // + (uint128_t(0xFFFFFFFFFFFFFF) & (uint128_t(std::numeric_limits<uint64_t>::max() - timestamp.sec_since_epoch()))  

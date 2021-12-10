@@ -131,7 +131,7 @@ describe('Tests for offers in dao registry', async function () {
   })
 
 
-  it('Create another offer', async function () {
+  it('Offer match - new offer automaticaly accepts ', async function () {
 
     // Arrange
     const dao = await DaosFactory.createWithDefaults({ })
@@ -171,6 +171,14 @@ describe('Tests for offers in dao registry', async function () {
     const offer_buy = await OffersFactory.createWithDefaults({ type: OfferConstants.buy })
     const actionOfferBuyCreateParams = offer_buy.getActionParams()
 
+    await TokenUtil.transfer({
+      amount: "1000.0000 DTK",
+      sender: daoreg,
+      reciever: offer_buy.params.creator,
+      dao_id: "",
+      contract: token_contract 
+    })
+
     await contracts.daoreg.createoffer(...actionOfferBuyCreateParams, { authorization: `${offer_buy.params.creator}@active` })
 
     await sleep(1000)
@@ -178,7 +186,25 @@ describe('Tests for offers in dao registry', async function () {
     const offer_sell = await OffersFactory.createWithDefaults({ type: OfferConstants.sell })
     const actionOfferSellCreateParams = offer_sell.getActionParams()
 
-    
+    await TokenUtil.transfer({
+      amount: "1000.0000 DTK",
+      sender: daoreg,
+      reciever: offer_sell.params.creator,
+      dao_id: "",
+      contract: token_contract 
+    })
+
+    await TokenUtil.transfer({
+      amount: "1000.0000 TLOS",
+      sender: daoreg,
+      reciever: offer_sell.params.creator,
+      dao_id: "",
+      contract: contracts.tlostoken 
+    })
+
+    console.log(actionOfferBuyCreateParams)
+
+    console.log(actionOfferSellCreateParams)
     // Act
     
     await contracts.daoreg.createoffer(...actionOfferSellCreateParams, { authorization: `${offer_sell.params.creator}@active` })
@@ -192,9 +218,12 @@ describe('Tests for offers in dao registry', async function () {
       limit: 100
     })
 
+    console.log(offerTable)
+
     expect(offerTable.rows.length).to.deep.equals(1)
 
   })
+  
 
   it('Create more offers', async function () {
 
