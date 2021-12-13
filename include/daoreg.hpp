@@ -233,11 +233,11 @@ CONTRACT daoreg : public contract {
 
       uint128_t by_offer_match () const {
          return
-            ( uint128_t(0xF &type) << 124) 
-            + (uint128_t(0xF &status) << 122) 
-            + (uint128_t(0xF &token_idx) << 120)
-            + (uint128_t( 0xFFFFFFFFFFFFFFFF & price_per_unit.amount) << 56 ) ;
-             // + (uint128_t(0xFFFFFFFFFFFFFF) & (uint128_t(std::numeric_limits<uint64_t>::max() - timestamp.sec_since_epoch()))  
+              (uint128_t(0xF                & type                 ) << 124) 
+            + (uint128_t(0xF                & status               ) << 122) 
+            + (uint128_t(0xF                & token_idx            ) << 120)
+            + (uint128_t(0xFFFFFFFFFFFFFFFF & price_per_unit.amount) << 56 ) 
+            + (uint128_t(0xFFFFFFFFFFFFFF   & (std::numeric_limits<uint64_t>::max() - timestamp.sec_since_epoch()) ) );
             }  
     };
 

@@ -368,10 +368,11 @@ void daoreg::createbuyoffer (
   auto by_offer_match = offer_t.get_index<eosio::name("byoffermatch")>();
 
   // offer match
-  auto soitr_buy = by_offer_match.lower_bound( (uint128_t( 0xF & util::type_sell_offer) << 124) 
-     + ( uint128_t(0xF & util::status_active) << 122)
-     + ( uint128_t(0xF & token_id) << 120)
-     + ( uint128_t( 0xFFFFFFFFFFFFFFFF & price_per_unit.amount) << 56 )   
+  auto soitr_buy = by_offer_match.lower_bound(
+      ( uint128_t(0xF & util::type_sell_offer) << 124 ) 
+     + ( uint128_t(0xF & util::status_active) << 122 )
+     + ( uint128_t(0xF & token_id) << 120 )
+     + ( uint128_t(0xFFFFFFFFFFFFFFFF & price_per_unit.amount ) << 56 )   
     );
 
   if (soitr_buy == by_offer_match.end()) {
@@ -402,10 +403,11 @@ void daoreg::createselloffer (
   auto by_offer_match = offer_t.get_index<eosio::name("byoffermatch")>();
 
   // offer match
-  auto boitr_sell = by_offer_match.lower_bound( (uint128_t(0xF & util::type_buy_offer) << 124) 
-     + ( uint128_t(0xF & util::status_active) << 122)
-     + ( uint128_t(0xF & token_id) << 120)
-     + ( uint128_t( 0xFFFFFFFFFFFFFFFF & price_per_unit.amount) << 56 )  
+  auto boitr_sell = by_offer_match.lower_bound( 
+      ( uint128_t(0xF & util::type_buy_offer) << 124 ) 
+     + ( uint128_t(0xF & util::status_active) << 122 )
+     + ( uint128_t(0xF & token_id) << 120 )
+     + ( uint128_t(0xFFFFFFFFFFFFFFFF & price_per_unit.amount ) << 56 )  
     );
 
   if (boitr_sell == by_offer_match.end()) {
