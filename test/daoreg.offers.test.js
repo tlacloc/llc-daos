@@ -21,6 +21,84 @@ const expect = require('chai').expect
 
 const { daoreg, tlostoken } = contractNames
 
+async function initToken ( dao_creator, user1, user2, token_account, token_contract ) {
+
+  contracts = await getContracts([daoreg, tlostoken])
+
+  await TokenUtil.create({ 
+      issuer: daoreg, 
+      maxSupply: "10000.0000 DTK",
+      contractAccount: token_account,
+      contract: token_contract
+    })
+
+    await TokenUtil.issue({
+      amount: "4000.0000 DTK",
+      issuer: daoreg,
+      contract: token_contract
+    })
+
+    await TokenUtil.transfer({
+      amount: "100.0000 DTK",
+      sender: daoreg,
+      reciever: dao_creator,
+      dao_id: "",
+      contract: token_contract 
+    })
+
+    await TokenUtil.createFromDao({ 
+      dao_id: 1, 
+      token_contract: token_account,
+      token_symbol: `4,DTK`,
+      daoCreator: dao_creator,
+      contract: contracts.daoreg
+    })
+
+    await TokenUtil.transfer({
+      amount: "100.0000 DTK",
+      sender: dao_creator,
+      reciever: daoreg, 
+      dao_id: "1",
+      contract: token_contract 
+    })
+
+
+    await TokenUtil.transfer({ // user 1
+      amount: "100.0000 DTK",
+      sender: daoreg,
+      reciever: user1,
+      dao_id: "",
+      contract: token_contract 
+    })
+
+
+    await TokenUtil.transfer({ // user 1 deposits to daoreg
+      amount: "100.0000 DTK",
+      sender: user1,
+      reciever: daoreg, 
+      dao_id: "1",
+      contract: token_contract 
+    })
+
+
+    await TokenUtil.transfer({ // user 2
+      amount: "100.0000 DTK",
+      sender: daoreg,
+      reciever: user2,
+      dao_id: "",
+      contract: token_contract 
+    })
+
+
+    await TokenUtil.transfer({ // user 2 deposits to daoreg
+      amount: "100.0000 DTK",
+      sender: user2,
+      reciever: daoreg, 
+      dao_id: "1",
+      contract: token_contract 
+    })
+
+}
 
 
 describe('Tests for offers in dao registry', async function () {
@@ -61,7 +139,115 @@ describe('Tests for offers in dao registry', async function () {
 
   })
 
-  it('Create a new offer', async function () {
+  it('Create a sell offer', async function () {
+    // Arrange
+    const dao = await DaosFactory.createWithDefaults({dao: 'firstdao'})
+    const actionParams = dao.getActionParams()
+
+    await contracts.daoreg.create(...actionParams, { authorization: `${dao.params.creator}@active` })
+
+    const [token_contract, token_account] = await TokenUtil.createTokenContract();
+
+    await TokenUtil.create({ 
+      issuer: daoreg, 
+      maxSupply: "10000.0000 DTK",
+      contractAccount: token_account,
+      contract: token_contract
+    })
+
+    await TokenUtil.issue({
+      amount: "4000.0000 DTK",
+      issuer: daoreg,
+      contract: token_contract
+    })
+
+    await TokenUtil.transfer({
+      amount: "100.0000 DTK",
+      sender: daoreg,
+      reciever: dao.params.creator,
+      dao_id: "",
+      contract: token_contract 
+    })
+
+    await TokenUtil.createFromDao({ 
+      dao_id: 1, 
+      token_contract: token_account,
+      token_symbol: `4,DTK`,
+      daoCreator: dao.params.creator,
+      contract: contracts.daoreg
+    })
+
+    await TokenUtil.transfer({
+      amount: "100.0000 DTK",
+      sender: dao.params.creator,
+      reciever: daoreg, 
+      dao_id: "1",
+      contract: token_contract 
+    })
+
+    await TokenUtil.checkBalance({
+      code : token_account, 
+      scope: dao.params.creator, 
+      table: 'accounts', 
+      balance_available : "0.0000 DTK", 
+      balance_locked : "", 
+      id : "", 
+      dao_id : "", 
+      token_account : ""
+    })
+
+    await TokenUtil.checkBalance({
+      code : daoreg, 
+      scope: dao.params.creator, 
+      table: 'balances', 
+      balance_available : "100.0000 DTK", 
+      balance_locked : "0.0000 DTK", 
+      id : 0, 
+      dao_id : 1, 
+      token_account : token_account
+    })
+
+    const offer = await OffersFactory.createWithDefaults({ creator: dao.params.creator , type: OfferConstants.sell })
+
+    console.log(offer.params.creator)
+    console.log(dao.params.creator)
+
+    const actionOfferCreateParams = offer.getActionParams()
+
+    // Act
+    await contracts.daoreg.createoffer(...actionOfferCreateParams, { authorization: `${offer.params.creator}@active` })
+
+    // Assert
+
+    // Assert
+    const offerTable = await rpc.get_table_rows({
+      code: daoreg,
+      scope: 1,
+      table: 'offers',
+      json: true,
+      limit: 100
+    })
+
+    expect(offerTable.rows).to.deep.equals([{
+      offer_id: 0,
+      creator: offer.params.creator,
+      available_quantity: offer.params.quantity,
+      total_quantity: offer.params.quantity,
+      price_per_unit: offer.params.price_per_unit,
+      convertion_info: [],
+      status: 1,
+      creation_date: offerTable.rows[0].creation_date,
+      type: offer.params.type,
+      token_idx: 1,
+      match_id: offerTable.rows[0].match_id
+      
+    }])
+
+
+
+  })
+
+  it('Create a buy offer', async function () {
 
   	// Arrange
     const dao = await DaosFactory.createWithDefaults({ })
@@ -71,20 +257,17 @@ describe('Tests for offers in dao registry', async function () {
 
     const [token_contract, token_account] = await TokenUtil.createTokenContract();
 
+    const alice = await createRandomAccount()
+    const bob = await createRandomAccount()
+
+    await initToken( dao.params.creator, alice, bob, token_account, token_contract )
+    /*
     await TokenUtil.initToken({
       token_contract: token_contract, 
       token_account: token_account, 
       issuer: daoreg, 
       max_supply: `1000000000000.0000 DTK`, 
       issue_amount: `1000000.0000 DTK` 
-    })
-
-    await TokenUtil.transfer({
-      amount: "1000.0000 DTK",
-      sender: daoreg,
-      reciever: dao.params.creator,
-      dao_id: "",
-      contract: token_contract 
     })
 
     await TokenUtil.createFromDao({ 
@@ -97,8 +280,62 @@ describe('Tests for offers in dao registry', async function () {
       reciever: daoreg
     })
 
+    await TokenUtil.transfer({
+      amount: "1000.0000 DTK",
+      sender: daoreg,
+      reciever: dao.params.creator,
+      dao_id: "1",
+      contract: token_contract 
+    })
+
     
-    const offer = await OffersFactory.createWithDefaults({ type: OfferConstants.sell })
+    const offer = await OffersFactory.createWithDefaults({ type: OfferConstants.buy })
+
+    await TokenUtil.transfer({
+      amount: "1000.0000 TLOS",
+      sender: daoreg,
+      reciever: offer.params.creator,
+      dao_id: "",
+      contract: contracts.tlostoken 
+    })
+
+    await TokenUtil.transfer({
+      amount: "1000.0000 DTK",
+      sender: daoreg,
+      reciever: offer.params.creator,
+      dao_id: "",
+      contract: token_contract 
+    })
+
+    // deposit token to daoreg
+
+    await TokenUtil.transfer({
+      amount: "100.0000 TLOS",
+      sender: offer.params.creator,
+      reciever: daoreg,
+      dao_id: "1",
+      contract: contracts.tlostoken 
+    })
+
+    await TokenUtil.transfer({
+      amount: "100.0000 DTK",
+      sender: offer.params.creator,
+      reciever: daoreg,
+      dao_id: "1",
+      contract: token_contract 
+    })
+    */
+
+    const balanceTable = await rpc.get_table_rows({
+      code: daoreg,
+      scope: alice,
+      table: 'balances',
+      json: true,
+      limit: 100
+    })
+
+    console.log(balanceTable)
+
     const actionOfferCreateParams = offer.getActionParams()
 
     // Act
@@ -121,7 +358,7 @@ describe('Tests for offers in dao registry', async function () {
       price_per_unit: offer.params.price_per_unit,
       convertion_info: [],
       status: 1,
-      timestamp: offerTable.rows[0].timestamp,
+      creation_date: offerTable.rows[0].creation_date,
       type: offer.params.type,
       token_idx: 1,
       match_id: offerTable.rows[0].match_id
@@ -171,8 +408,11 @@ describe('Tests for offers in dao registry', async function () {
     const offer_buy = await OffersFactory.createWithDefaults({ type: OfferConstants.buy })
     const actionOfferBuyCreateParams = offer_buy.getActionParams()
 
+
+    // comprar tokens DTK por TLOS
+    
     await TokenUtil.transfer({
-      amount: "1000.0000 DTK",
+      amount: "1000.0000 DTK", 
       sender: daoreg,
       reciever: offer_buy.params.creator,
       dao_id: "",
@@ -220,11 +460,24 @@ describe('Tests for offers in dao registry', async function () {
 
     console.log(offerTable)
 
-    expect(offerTable.rows.length).to.deep.equals(1)
+    expect(offerTable.rows).to.deep.equals([{
+      offer_id: 0,
+      creator: offer_buy.params.creator,
+      available_quantity: "0.0000 DTK",
+      total_quantity: offer_buy.params.quantity,
+      price_per_unit: offer_buy.params.price_per_unit,
+      convertion_info: [],
+      status: 0,
+      creation_date: offerTable.rows[0].creation_date,
+      type: offer_buy.params.type,
+      token_idx: 1,
+      match_id: offerTable.rows[0].match_id
+      
+    }])
 
   })
   
-
+  /*
   it('Create more offers', async function () {
 
     // Arrange
@@ -321,7 +574,7 @@ describe('Tests for offers in dao registry', async function () {
 
   })
 
-
+*/
 
 })
 

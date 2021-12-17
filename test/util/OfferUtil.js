@@ -1,8 +1,10 @@
 const { createRandomAccount } = require('../../scripts/eosio-util')
 
 const OfferConstants = {
-  sell: 0,
-  buy: 1,
+  sell  : 0,
+  buy   : 1,
+  close : 0,
+  open  : 1
 }
 
 class Offer {
