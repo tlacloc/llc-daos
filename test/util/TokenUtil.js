@@ -86,7 +86,7 @@ class TokenUtil {
           limit: 100
       })
       
-      if(table == 'balances') {
+      if(table == 'balances') { // daoreg
           assert.deepStrictEqual(_table.rows, [
               {
                   id,
@@ -96,7 +96,7 @@ class TokenUtil {
                   token_account
               }
           ])
-      } else if (table == 'accounts') {
+      } else if (table == 'accounts') { // token contract
           assert.deepStrictEqual(_table.rows, [
               {
                   balance: balance_available
