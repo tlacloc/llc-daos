@@ -13,6 +13,9 @@ const contract = (name, nameOnChain) => {
   }
 }
 
+const devKey = 'EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV'
+const devTelosKey = 'EOS8CiMM6Lqsahghzy7LSqxcRc67PG8n2gnjaTQ1ePG5nWwnqYWEm'
+
 const supportedChains = {
   local: 'local',
   telosTestnet: 'telosTestnet',
@@ -27,12 +30,12 @@ const ownerByChain = {
 
 const ownerPublicKeysByChain = {
   [supportedChains.local]: {
-    owner: 'EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV',
-    active: 'EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV'
+    owner: devKey,
+    active: devKey
   },
   [supportedChains.telosTestnet]: {
-    owner: 'EOS8CiMM6Lqsahghzy7LSqxcRc67PG8n2gnjaTQ1ePG5nWwnqYWEm',
-    active: 'EOS8CiMM6Lqsahghzy7LSqxcRc67PG8n2gnjaTQ1ePG5nWwnqYWEm'
+    owner: devTelosKey,
+    active: devTelosKey
     // owner: 'EOS6PtkWLquhJYFxjU8mWTtg8eZWWjp39FQ2m3Xrceun9V8Z6fZNQ',
     // active: 'EOS6PtkWLquhJYFxjU8mWTtg8eZWWjp39FQ2m3Xrceun9V8Z6fZNQ'
   },
@@ -43,12 +46,12 @@ const ownerPublicKeysByChain = {
 
 const publicKeysByChain = {
   [supportedChains.local]: {
-    owner: 'EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV',
-    active: 'EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV'
+    owner: devKey,
+    active: devKey
   },
   [supportedChains.telosTestnet]: {
-    owner: 'EOS8CiMM6Lqsahghzy7LSqxcRc67PG8n2gnjaTQ1ePG5nWwnqYWEm',
-    active: 'EOS8CiMM6Lqsahghzy7LSqxcRc67PG8n2gnjaTQ1ePG5nWwnqYWEm'
+    owner: devTelosKey,
+    active: devTelosKey
   },
   [supportedChains.telosMainnet]: {
 
@@ -106,5 +109,6 @@ function sleep(ms) {
 }
 
 module.exports = {
-  contracts, contractNames, nameOnChainToName, owner, ownerPublicKeys, publicKeys, isLocalNode, sleep, chain, permissionsConfig
+  contracts, contractNames, nameOnChainToName, owner, ownerPublicKeys, publicKeys, isLocalNode, sleep, chain, permissionsConfig,
+  devKey
 }

@@ -1,5 +1,6 @@
 const { api, rpc } = require('./eos')
-const { nameOnChainToName, contractNames, isLocalNode } = require('./config')
+const { nameOnChainToName, contractNames, isLocalNode, devKey } = require('./config')
+const { createAccount } = require('./deploy')
 
 function getNonce () {
   if (isLocalNode()) {
@@ -83,7 +84,7 @@ async function getAccountBalance (contract, account, token) {
   return Number.parseFloat(balance[0]) || 0
 }
 
-async function randomAccountName() {
+function randomAccountName() {
   let length = 12
   var result = ''
   var characters = 'abcdefghijklmnopqrstuvwxyz1234'
@@ -94,6 +95,43 @@ async function randomAccountName() {
   return result
 }
 
+async function createRandomAccount () {
+  const accountName = randomAccountName()
+  await createAccount({ 
+    account:accountName, 
+    publicKey: devKey,
+    stakes: {}, 
+    creator: 'eosio'
+  })
+  return accountName
+}
+
+class Asset {
+
+  constructor (amount, code, precision) {
+    this.amount = amount
+    this.code = code
+    this.precision = precision
+  }
+
+  static fromString (string) {
+    const [amountString, code] = string.split(' ')
+    const [_, decimals] = amountString.split('.')
+    
+    const precision = decimals.length
+    const amount = parseFloat(amountString * (10 ** precision))
+
+    return new Asset(amount, code, precision)
+  }
+
+  toString () {
+    const amountWithDecimals = (this.amount / (10 ** this.precision)).toFixed(this.precision)
+    return `${amountWithDecimals} ${this.code}`
+  }
+
+}
+
 module.exports = {
-  getContracts, initContract, getAccountBalance, randomAccountName
+  getContracts, initContract, getAccountBalance, randomAccountName,
+  createRandomAccount, Asset
 }
