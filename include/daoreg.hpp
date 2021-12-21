@@ -106,12 +106,12 @@ CONTRACT daoreg : public contract {
     void resolver_buyer(
       const uint64_t & dao_id,
       const uint8_t & offer_id,
-      const name & issuer);
+      const name & buyer);
 
     void resolver_seller(
       const uint64_t & dao_id,
       const uint8_t & offer_id,
-      const name & issuer);
+      const name & seller);
 
     void send_transfer(
       const name & beneficiary, 
@@ -183,7 +183,7 @@ CONTRACT daoreg : public contract {
       const_mem_fun<daos, uint128_t, &daos::by_dao_daoid>>
     >dao_table;
 
-    TABLE balances {
+    TABLE balances { // scoped by account
       uint64_t id;
       asset available;
       asset locked; 
@@ -224,7 +224,7 @@ CONTRACT daoreg : public contract {
       asset price_per_unit; // always in TLOS
       std::map<string, asset> convertion_info; //(price_per_unit in USD, convertion_rate)
       uint8_t status;
-      time_point timestamp;
+      time_point creation_date;
       uint8_t type;
       uint8_t token_idx;
       uint128_t match_id;
@@ -237,7 +237,7 @@ CONTRACT daoreg : public contract {
             + (uint128_t(0xF                & status               ) << 122) 
             + (uint128_t(0xF                & token_idx            ) << 120)
             + (uint128_t(0xFFFFFFFFFFFFFFFF & price_per_unit.amount) << 56 ) 
-            + (uint128_t(0xFFFFFFFFFFFFFF   & (std::numeric_limits<uint64_t>::max() - timestamp.sec_since_epoch()) ) );
+            + (uint128_t(0xFFFFFFFFFFFFFF   & (std::numeric_limits<uint64_t>::max() - creation_date.sec_since_epoch()) ) );
             }  
     };
 
