@@ -1,6 +1,7 @@
 const assert = require('assert')
 const { rpc } = require('../scripts/eos')
 const { getContracts, initContract, createRandomAccount, Asset } = require('../scripts/eosio-util')
+const { createAccount, deployContract } = require('../scripts/deploy')
 const { assertError } = require('../scripts/eosio-errors')
 
 const { contractNames, contracts: configContracts, isLocalNode, sleep } = require('../scripts/config')
@@ -26,14 +27,10 @@ describe('Tests for offers in dao registry', async function () {
   let contracts
 
   // test accounts
-  let bob
-  let alice
-  let dao_creator
+  let bob, alice, dao_creator
 
   let eosio_token_contract
   const eosio_account = 'eosio.token'
-
-  let token_contract, token_account
 
   before(async function () {
     if (!isLocalNode()) {
@@ -44,11 +41,13 @@ describe('Tests for offers in dao registry', async function () {
   })
 
   beforeEach(async function () {
+
     await EnvironmentUtil.initNode()
     await sleep(4000)
+
     await EnvironmentUtil.deployContracts(configContracts)
 
-    // TLOS contract
+    await EnvironmentUtil.deployContract({name: 'tlostoken', nameOnChain: eosio_account})
 
     eosio_token_contract = await initContract(eosio_account)
 
@@ -58,9 +57,19 @@ describe('Tests for offers in dao registry', async function () {
 
     await setParamsValue()
 
+    // TLOS contract
+
+    // eosio_token_contract = await initContract(eosio_account)
+
+    // await EnvironmentUtil.deployContract(eosio_account)
+
+    
+
+    
+
     await TokenUtil.initToken({
-      token_contract: contracts.tlostoken, 
-      token_account: tlostoken, 
+      token_contract: eosio_token_contract, 
+      token_account: eosio_account, 
       issuer: daoreg, 
       max_supply: `1000000000000.0000 ${TokenUtil.tokenCode}`, 
       issue_amount: `1000000.0000 ${TokenUtil.tokenCode}` 
@@ -72,19 +81,19 @@ describe('Tests for offers in dao registry', async function () {
 
     // give tlos to accounts
     await TokenUtil.transfer({
-      amount: `100.0000 ${TokenUtil.tokenCode}`,
+      amount: `1000.0000 ${TokenUtil.tokenCode}`,
       sender: daoreg,
       reciever: alice,
       dao_id: "",
-      contract: contracts.tlostoken 
+      contract: eosio_token_contract 
     })
 
     await TokenUtil.transfer({
-      amount: `100.0000 ${TokenUtil.tokenCode}`,
+      amount: `1000.0000 ${TokenUtil.tokenCode}`,
       sender: daoreg,
       reciever: bob,
       dao_id: "",
-      contract: contracts.tlostoken 
+      contract: eosio_token_contract
     })
 
     // create dao
@@ -296,12 +305,12 @@ describe('Tests for offers in dao registry', async function () {
     const offer = await OffersFactory.createWithDefaults({ creator: alice, type: OfferConstants.buy })
     const actionOfferCreateParams = offer.getActionParams()
 
-    await TokenUtil.transfer({
-      amount: `100.0000 ${TokenUtil.tokenCode}`,
+    await TokenUtil.transfer({ // deposit to dao
+      amount: `1.0000 ${TokenUtil.tokenCode}`,
       sender: alice,
       reciever: daoreg,
       dao_id: "0",
-      contract: contracts.tlostoken 
+      contract: eosio_token_contract 
     })
 
     // Act

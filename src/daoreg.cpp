@@ -365,7 +365,7 @@ void daoreg::createbuyoffer (
   const asset & price_per_unit,
   const uint8_t & token_id) {
 
-  asset cost = asset(quantity.amount * price_per_unit.amount, price_per_unit.symbol);
+  asset cost = asset(quantity.amount * price_per_unit.amount / 10000, price_per_unit.symbol); // divided by 10000 to normalize system token
   has_enough_balance(dao_id, creator, cost);
 
   offers_table offer_t(get_self(), dao_id);
@@ -599,27 +599,54 @@ void daoreg::has_enough_balance(const uint64_t & dao_id, const name & account, c
   auto balances_by_token_account_token = _balances.get_index<name("bytkaccttokn")>();
   auto itr = balances_by_token_account_token.find((uint128_t(token_account.value) << 64) + token_symbol.raw());
 
-  check(itr != balances_by_token_account_token.end(), "Token account and symbol are not registered in your account");
-  check(itr->available >= quantity, "You do not have enough balance");
+  check(itr != balances_by_token_account_token.end(), "has_enough_balance: Token account and symbol are not registered in your account");
+  check(itr->available >= quantity, "has_enough_balance: You do not have enough balance");
 
 }
 
-/*
-void daoreg::has_enough_balance(const name & token_account, const name & account, const asset & quantity) {
 
-  
-
-}
-
-*/
 name daoreg::get_token_account(const uint64_t & dao_id, const symbol & token_symbol) {
+
+  // error when passing system tokens cuz are stored at dao_id = 0
 
   name token_account;
   bool token_is_registered = false;
 
-  check(dao_id >= 0, "Dao id has to be a positive number");
+  check(dao_id >= 0, "get_token_account: Dao id has to be a positive number");
 
   dao_table _dao(get_self(), get_self().value);
+
+  // tokens registred in a dao
+  auto daoit = _dao.find(dao_id);
+  check(daoit != _dao.end(), "get_token_account: Organization not found");
+  auto dao_tokens = daoit->tokens;
+
+  for (auto& itr : dao_tokens) {
+    if (itr.second == token_symbol) {
+      token_is_registered = true;
+      token_account = itr.first;
+      break;
+    }
+  }
+
+  // system token
+  if (!token_is_registered) {
+    for (auto& itr : system_tokens) {
+      if (itr.second == token_symbol) {
+        token_is_registered = true;
+        token_account = itr.first;
+        break;
+      }             
+    }
+  }
+
+  check(token_is_registered, "get_token_account: Token is not supported by a registred Dao");
+
+
+  return token_account;
+
+  /*
+  // is a system token?
 
   if(dao_id == 0) {
 
@@ -630,12 +657,13 @@ name daoreg::get_token_account(const uint64_t & dao_id, const symbol & token_sym
         break;
       }             
     }
-    check(token_is_registered, "This is not a supported system token");
+
+    check(token_is_registered, "get_token_account: This is not a supported system token");
 
   } else {
 
     auto daoit = _dao.find(dao_id);
-    check(daoit != _dao.end(), "Organization not found");
+    check(daoit != _dao.end(), "get_token_account:  Organization not found");
     auto dao_tokens = daoit->tokens;
 
     for (auto& itr : dao_tokens) {
@@ -649,5 +677,5 @@ name daoreg::get_token_account(const uint64_t & dao_id, const symbol & token_sym
   }
 
   return token_account;
-
+  */
 }
