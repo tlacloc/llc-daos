@@ -343,54 +343,31 @@ describe('Tests for offers in dao registry', async function () {
   })
 
 
-  it('Offer match - new offer automaticaly accepts ', async function () {
+  it('Offer match - new offer is automaticaly accepted ', async function () {
 
-    /*
+    
     // Arrange
-    
-    const offer_buy = await OffersFactory.createWithDefaults({ type: OfferConstants.buy })
-    const actionOfferBuyCreateParams = offer_buy.getActionParams()
 
-
-    // comprar tokens DTK por TLOS
-    
-    await TokenUtil.transfer({
-      amount: "1000.0000 DTK", 
-      sender: daoreg,
-      reciever: offer_buy.params.creator,
-      dao_id: "",
-      contract: token_contract 
-    })
-
-    await contracts.daoreg.createoffer(...actionOfferBuyCreateParams, { authorization: `${offer_buy.params.creator}@active` })
-
-    await sleep(1000)
-
-    const offer_sell = await OffersFactory.createWithDefaults({ type: OfferConstants.sell })
+    const offer_sell = await OffersFactory.createWithDefaults({ creator: bob, type: OfferConstants.sell })
     const actionOfferSellCreateParams = offer_sell.getActionParams()
 
-    await TokenUtil.transfer({
-      amount: "1000.0000 DTK",
-      sender: daoreg,
-      reciever: offer_sell.params.creator,
-      dao_id: "",
-      contract: token_contract 
-    })
-
-    await TokenUtil.transfer({
-      amount: "1000.0000 TLOS",
-      sender: daoreg,
-      reciever: offer_sell.params.creator,
-      dao_id: "",
-      contract: contracts.tlostoken 
-    })
-
-    console.log(actionOfferBuyCreateParams)
-
-    console.log(actionOfferSellCreateParams)
-    // Act
-    
     await contracts.daoreg.createoffer(...actionOfferSellCreateParams, { authorization: `${offer_sell.params.creator}@active` })
+
+    
+    
+    const offer_buy = await OffersFactory.createWithDefaults({ creator: alice, type: OfferConstants.buy })
+    const actionOfferBuyCreateParams = offer_buy.getActionParams()
+
+    await TokenUtil.transfer({ // deposit to dao
+      amount: `1.0000 ${TokenUtil.tokenCode}`,
+      sender: alice,
+      reciever: daoreg,
+      dao_id: "0",
+      contract: eosio_token_contract 
+    })
+
+    // Act
+    await contracts.daoreg.createoffer(...actionOfferBuyCreateParams, { authorization: `${offer_buy.params.creator}@active` })
 
     // Assert
     const offerTable = await rpc.get_table_rows({
@@ -401,24 +378,22 @@ describe('Tests for offers in dao registry', async function () {
       limit: 100
     })
 
-    console.log(offerTable)
-
     expect(offerTable.rows).to.deep.equals([{
       offer_id: 0,
-      creator: offer_buy.params.creator,
+      creator: offer_sell.params.creator,
       available_quantity: "0.0000 DTK",
-      total_quantity: offer_buy.params.quantity,
-      price_per_unit: offer_buy.params.price_per_unit,
+      total_quantity: offer_sell.params.quantity,
+      price_per_unit: offer_sell.params.price_per_unit,
       convertion_info: [],
       status: 0,
       creation_date: offerTable.rows[0].creation_date,
-      type: offer_buy.params.type,
+      type: offer_sell.params.type,
       token_idx: 1,
       match_id: offerTable.rows[0].match_id
       
     }])
 
-    */
+    
 
   })
   
