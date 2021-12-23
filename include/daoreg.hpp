@@ -21,6 +21,8 @@ CONTRACT daoreg : public contract {
 
     ACTION reset(std::vector<name> users);
 
+    ACTION resetoffers();
+
     ACTION create(
       const name & dao, 
       const name & creator, 
@@ -103,15 +105,27 @@ CONTRACT daoreg : public contract {
       const name & account, 
       const asset & quantity);
 
-    void resolver_buyer(
+    void resolve_buy_offer(
+      const uint64_t & dao_id,
+      const uint8_t & offer_id,
+      const name & seller);
+
+    void resolve_sell_offer(
       const uint64_t & dao_id,
       const uint8_t & offer_id,
       const name & buyer);
 
-    void resolver_seller(
-      const uint64_t & dao_id,
-      const uint8_t & offer_id,
-      const name & seller);
+    void add_balance(
+      const name & account, 
+      const asset & quantity, 
+      const name & token_account,
+      const uint64_t & dao_id);
+
+    void remove_balance(
+      const name & account, 
+      const asset & quantity, 
+      const name & token_account,
+      const uint64_t & dao_id);
 
     void send_transfer(
       const name & beneficiary, 

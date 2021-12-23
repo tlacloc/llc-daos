@@ -20,6 +20,10 @@ ACTION daoreg::reset(std::vector<name> users) {
   }
 }
 
+ACTION daoreg::resetoffers() {
+  // offers_table _offer(get(), dao_id);
+}
+
 ACTION daoreg::create(const name& dao, const name& creator, const std::string& ipfs) {
 
   require_auth( is_account(dao) ? dao : creator );
@@ -365,7 +369,8 @@ void daoreg::createbuyoffer (
   const asset & price_per_unit,
   const uint8_t & token_id) {
 
-  asset cost = asset(quantity.amount * price_per_unit.amount / 10000, price_per_unit.symbol); // divided by 10000 to normalize system token
+  // divided by 10000 to normalize system token
+  asset cost = asset(quantity.amount * price_per_unit.amount / 10000, price_per_unit.symbol); 
   has_enough_balance(dao_id, creator, cost);
 
   offers_table offer_t(get_self(), dao_id);
@@ -459,19 +464,55 @@ ACTION daoreg::acceptoffer (const uint64_t & dao_id, const name & account, const
 
   check(ofit->status == util::status_active, "Offer is not active");
 
-  asset cost = asset( ofit->available_quantity.amount * ofit->price_per_unit.amount, ofit->price_per_unit.symbol );
-  // has_enough_balance(dao_id, account, cost);
+  if (ofit->type == util::type_sell_offer) { 
 
-  // if (ofit->type == util::type_sell_offer) { // transfer sing by daoreg
-  //   transfer(account, ofit->creator, cost, dao_id);
-  //   transfer(ofit->creator, account, ofit->available_quantity, dao_id);
+    resolve_sell_offer(dao_id, offer_id, account);
 
-  // } else if (ofit->type == util::type_buy_offer) {
-  //   transfer(ofit->creator, account, cost, dao_id);
-  //   transfer(account, ofit->creator, ofit->available_quantity, dao_id);
-  // } 
+  } else if (ofit->type == util::type_buy_offer) {
 
-  // check(false, cost.to_string() );
+    resolve_buy_offer(dao_id, offer_id, account);
+
+  } 
+  
+
+}
+
+void daoreg::resolve_buy_offer(
+  const uint64_t & dao_id,
+  const uint8_t & offer_id,
+  const name & seller ) {
+
+  /*
+    creator
+    wants daos token
+    has system token
+  */
+
+  require_auth(seller);
+
+  offers_table offer_t(get_self(), dao_id);
+
+  auto ofit = offer_t.find(offer_id);
+  check(ofit != offer_t.end(), "Offer not found");
+
+  check(ofit->status == util::status_active, "Offer is not active");
+
+  // divided by 10000 to normalize system token
+
+  asset cost = asset( ofit->available_quantity.amount * ofit->price_per_unit.amount / 10000, ofit->price_per_unit.symbol );  
+  has_enough_balance(dao_id, seller, ofit->available_quantity);
+
+  name daos_token_account = get_token_account( dao_id, ofit->available_quantity.symbol );
+  name system_token_account = get_token_account( dao_id, ofit->price_per_unit.symbol );
+
+  // transfer system tokens
+  remove_balance( ofit->creator, cost, system_token_account, dao_id );
+  add_balance( seller, cost, system_token_account, dao_id );
+
+
+  // transfer daos tokens
+  add_balance( ofit->creator, ofit->available_quantity, daos_token_account, dao_id );
+  remove_balance(seller, ofit->available_quantity, daos_token_account, dao_id );
 
   offer_t.modify(ofit, get_self(), [&](auto& item){
     item.available_quantity = asset(0, ofit-> available_quantity.symbol);
@@ -481,22 +522,100 @@ ACTION daoreg::acceptoffer (const uint64_t & dao_id, const name & account, const
 }
 
 
-
-void daoreg::resolver_buyer(
+void daoreg::resolve_sell_offer(
   const uint64_t & dao_id,
   const uint8_t & offer_id,
   const name & buyer) {
 
+  /*
+    creator
+    wants system token
+    has daos token
+  */
+
+  require_auth(buyer);
+
+  offers_table offer_t(get_self(), dao_id);
+
+  auto ofit = offer_t.find(offer_id);
+  check(ofit != offer_t.end(), "Offer not found");
+
+  check(ofit->status == util::status_active, "Offer is not active");
+
+  // pays in system token
+  // divided by 10000 to normalize system token
+
+  asset cost = asset( ofit->available_quantity.amount * ofit->price_per_unit.amount / 10000, ofit->price_per_unit.symbol );  
+  has_enough_balance(dao_id, buyer, cost);
+
+  name daos_token_account = get_token_account( dao_id, ofit->available_quantity.symbol );
+  name system_token_account = get_token_account( dao_id, ofit->price_per_unit.symbol );
+
+  // transfer system tokens
+  add_balance( ofit->creator, cost, system_token_account, dao_id );
+  remove_balance( buyer, cost, system_token_account, dao_id );
+
+
+  // transfer daos tokens
+  remove_balance( ofit->creator, ofit->available_quantity, daos_token_account, dao_id );
+  add_balance( buyer, ofit->available_quantity, daos_token_account, dao_id );
+
+  offer_t.modify(ofit, get_self(), [&](auto& item){
+    item.available_quantity = asset(0, ofit-> available_quantity.symbol);
+    item.status = util::status_closed;
+  });
+
+
+}
+
+void daoreg::add_balance(
+  const name & account, 
+  const asset & quantity, 
+  const name & token_account,
+  const uint64_t & dao_id) {
+
+
+  balances_table _balances(get_self(), account.value);
+
+  auto balances_by_token_account_token = _balances.get_index<name("bytkaccttokn")>();
+  auto itr = balances_by_token_account_token.find((uint128_t(token_account.value) << 64) + quantity.symbol.raw());
+
+  if (itr == balances_by_token_account_token.end()) {
+    _balances.emplace(get_self(), [&](auto& user){
+      user.id = _balances.available_primary_key();
+      user.available = quantity;
+      user.locked = asset(0, quantity.symbol);
+      user.dao_id = dao_id;
+      user.token_account = token_account;
+    });
+  } else {
+    balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
+      user.available += quantity;
+    });
+  }
+
 }
 
 
-void daoreg::resolver_seller(
-  const uint64_t & dao_id,
-  const uint8_t & offer_id,
-  const name & seller) {
+void daoreg::remove_balance(
+  const name & account, 
+  const asset & quantity, 
+  const name & token_account,
+  const uint64_t & dao_id) {
+
+  balances_table _balances(get_self(), account.value);
+
+  auto balances_by_token_account_token = _balances.get_index<name("bytkaccttokn")>();
+  auto itr = balances_by_token_account_token.find((uint128_t(token_account.value) << 64) + quantity.symbol.raw());
+
+  check(itr != balances_by_token_account_token.end(), "Token account and symbol are not registered in your account");
+  check(itr->available >= quantity, "You do not have enough balance");
+
+  balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
+    user.available -= quantity;
+  });
 
 }
-
 
 void daoreg::send_transfer(
   const name & beneficiary, 
@@ -517,7 +636,7 @@ void daoreg::send_transfer(
     permission_level(get_self(), "active"_n),
     token_account,
     "transfer"_n,
-    std::make_tuple(sender, beneficiary, quantity, memo)
+    std::make_tuple( sender, beneficiary, quantity, memo )
   ).send();
 
 }
@@ -642,40 +761,6 @@ name daoreg::get_token_account(const uint64_t & dao_id, const symbol & token_sym
 
   check(token_is_registered, "get_token_account: Token is not supported by a registred Dao");
 
-
   return token_account;
 
-  /*
-  // is a system token?
-
-  if(dao_id == 0) {
-
-    for (auto& itr : system_tokens) {
-      if (itr.second == token_symbol) {
-        token_is_registered = true;
-        token_account = itr.first;
-        break;
-      }             
-    }
-
-    check(token_is_registered, "get_token_account: This is not a supported system token");
-
-  } else {
-
-    auto daoit = _dao.find(dao_id);
-    check(daoit != _dao.end(), "get_token_account:  Organization not found");
-    auto dao_tokens = daoit->tokens;
-
-    for (auto& itr : dao_tokens) {
-      if (itr.second == token_symbol) {
-        token_is_registered = true;
-        token_account = itr.first;
-        break;
-      }
-    }
-    check(token_is_registered, "get_token_account: Token is not supported by a registred Dao");
-  }
-
-  return token_account;
-  */
 }
