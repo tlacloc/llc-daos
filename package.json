@@ -14,7 +14,7 @@
     "compileContract": "node scripts/commands.js compile $1",
     "setParams": "node scripts/commands.js set params",
     "setPermissions": "node scripts/commands.js set permissions",
-    "test": "mocha --timeout 15000"
+    "test": "mocha --timeout 0"
   },
   "author": "",
   "license": "ISC",
