@@ -52,6 +52,39 @@ class EnvironmentUtil {
     }
   }
 
+  static async deployContract (contract) {
+
+    try {
+        await createAccount({
+          account: contract.nameOnChain,
+          publicKey: devKey,
+          stakes: {},
+          creator: 'eosio'
+        })
+      } catch (err) {
+        accountExists(err)
+      }
+      try {
+        await deployContract(contract)
+      } catch (err) {
+        contractRunningSameCode(err)
+      }
+
+  }
+
+  static async createAccount (name) {
+    try {
+        await createAccount({
+          account: name,
+          publicKey: devKey,
+          stakes: {},
+          creator: 'eosio'
+        })
+      } catch (err) {
+        accountExists(err)
+      }
+  }
+
   static async killNode () {
     const command = `docker kill ${EnvironmentUtil.nodeosName}`
     await execCommand(command)
