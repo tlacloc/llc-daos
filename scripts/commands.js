@@ -81,6 +81,42 @@ async function run (contractName) {
 
 }
 
+async function compile () {
+
+  // compile contracts
+  console.log('COMPILING CONTRACTS\n')
+
+  await Promise.all(contracts.map(contract => {
+    return compileContract({
+      contract: contract.name,
+      path: `./src/${contract.name}.cpp`      
+    })
+  }))
+
+  console.log('compilation finished\n\n')
+
+}
+
+
+async function compile_contract (contractName) {
+
+  let contract = contracts.filter(c => c.name == contractName)
+  if (contract.length > 0) {
+    contract = contract[0]
+  } else {
+    console.log('contract not found')
+    return
+  }
+
+  await compileContract({
+    contract: contract.name,
+    path: `./src/${contract.name}.cpp`      
+  })
+
+  console.log('compilation finished\n\n')
+
+}
+
 async function main () {
 
   if (!isLocalNode()) {
@@ -90,17 +126,39 @@ async function main () {
 
   const args = process.argv.slice(2)
 
-  if (args[0] === 'init') {
-    await init()
-  } else if (args[0] == 'run') {
-    await run(args[1])
-  } else if (args[0] == 'set') {
-    if (args[1] == 'params') {
-      await setParamsValue()
-    } else if (args[1] == 'permissions') {
-      await updatePermissions()
-    }
-  }
+  switch(args[0]) {
+
+    case 'init':
+      await init()
+      break;
+
+    case 'compile':
+      if (args.length == 1) {
+        await compile()
+
+      } else {
+
+        await compile_contract(args[1])
+      }
+      break;
+
+    case 'run':
+      await run(args[1])
+      break;
+
+    case 'set':
+      if (args[1] == 'params') {
+        await setParamsValue()
+
+      } else if (args[1] == 'permissions') {
+        await updatePermissions()
+
+      }
+      break;
+
+    default:
+      console.log('Invalid input.')
+  } 
 
 }
 

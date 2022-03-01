@@ -94,7 +94,7 @@ async function addActorPermission (target, targetRole, actor, actorRole) {
     }
 
     await updateAuth(permissions, { authorization: `${target}@owner` })
-    console.log(`permission created on ${target}@${targetRole} for ${actor}@${actorRole}`)
+    // console.log(`permission created on ${target}@${targetRole} for ${actor}@${actorRole}`)
   } catch (err) {
     console.error(`failed permission update on ${target} for ${actor}\n* error: ` + err + `\n`)
   }

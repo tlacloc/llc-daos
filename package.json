@@ -10,9 +10,11 @@
   "scripts": {
     "initAll": "node scripts/commands.js init",
     "initContract": "node scripts/commands.js run $1",
+    "compileAll": "node scripts/commands.js compile",
+    "compileContract": "node scripts/commands.js compile $1",
     "setParams": "node scripts/commands.js set params",
     "setPermissions": "node scripts/commands.js set permissions",
-    "test": "mocha --timeout 15000"
+    "test": "mocha --timeout 0"
   },
   "author": "",
   "license": "ISC",
@@ -21,12 +23,13 @@
   },
   "homepage": "https://github.com/IanMendozaJaimes/llc-daos#readme",
   "dependencies": {
+    "chai": "^4.3.4",
     "dotenv": "^8.2.0",
     "elliptic": "^6.5.4",
     "eosjs": "^21.0.3",
     "fs-extra": "^9.1.0",
-    "node-fetch": "^2.6.1",
     "handlebars": "^4.7.6",
+    "node-fetch": "^2.6.1",
     "promisify": "^0.0.3",
     "prompt-sync": "^4.2.0"
   },

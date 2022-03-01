@@ -32,17 +32,18 @@ CONTRACT daoinf : public contract {
 
     ACTION reset();
 
-    ACTION initdao(const name & creator);
+    ACTION adddao(const name & creator, const uint64_t & dao_id) ;
 
-    ACTION storeentry(const std::vector<hypha::Content> & values);
+    ACTION storeentry(const std::vector<hypha::Content> & values, const uint64_t &dao_id);
 
-    ACTION delentry(const std::vector<string> & labels);
+    ACTION delentry(const std::vector<string> & labels, const uint64_t &dao_id);
 
   private:
 
     int64_t active_cutoff_date();
     hypha::Document get_root_node();
     hypha::Document get_dao_node();
+    hypha::Document get_dao_inf_node(const uint64_t & dao_id);
     hypha::Document get_doc_from_edge(const checksum256 & node_hash, const name & edge_name);
     void update_node(hypha::Document * node_doc, const string & content_group_label, const std::vector<hypha::Content> & new_contents);
     bool edge_exists(const checksum256 & from_node_hash, const name & edge_name);
@@ -53,8 +54,7 @@ CONTRACT daoinf : public contract {
 extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
   switch (action) {
     EOSIO_DISPATCH_HELPER(daoinf, (reset)
-      (initdao)
-      (storeentry)(delentry)
+      (storeentry)(delentry)(adddao)
     )
   }
 }
