@@ -39,7 +39,7 @@ describe('Tests for offers in dao registry', async function () {
     }
 
   })
-
+/*
   beforeEach(async function () {
 
     await EnvironmentUtil.initNode()
