@@ -39,10 +39,16 @@ async function compileContract ({
   await deleteFile(join(compiled, `${contract}.abi`))
 
   // Download document-graph
-  // await execCommand('git submodule init')
-  // await execCommand('git submodule update')
+  const docGraph = join(__dirname, '../document-graph')
+  if (!fs.existsSync(docGraph)) {
+    console.log('Updating git submodules')
+    await execCommand('git submodule init')
+    await execCommand('git submodule update')
+  }
+  
 
   // copy document-graph submodule to the project's paths
+  
   const docGraphInclude = 'include/document_graph'
   const docGraphIncludeLogger = 'include/logger'
   const docGraphSrc = 'src/document_graph'
