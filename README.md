@@ -27,7 +27,7 @@ git submodule init
 git submodule update
 ```
 
-Compile & test files from submodule ( description in document-graph/readme.md or https://github.com/hashed-io/document-graph )
+Compile & test files from submodule ( description in document-graph/readme.md or [hypha repository](https://github.com/hypha-dao/document-graph/tree/23d2b74e82afce8f72f091bc7933b97b126dca26) )
 
 
 Copy document-graph/include/document_graph & document-graph/include/logger to include/, document-graph/scr/document_graph to src
