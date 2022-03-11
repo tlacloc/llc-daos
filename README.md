@@ -2,17 +2,63 @@
 
 ## setup project 
 
+### Environment variables
+
 create a .env file based on .env.example
+
+command: 
+```bash
+cp .env.example .env
+```
+### Nodejs
+
+Download the libraries by running
+
+```bash
+npm install
+```
+
+### Git submodules
+
+To setup the submodules just run the following commands:
+
+```bash
+git submodule init
+git submodule update
+```
+
+Compile & test files from submodule ( description in document-graph/readme.md or https://github.com/hashed-io/document-graph )
+
+
+Copy document-graph/include/document_graph & document-graph/include/logger to include/, document-graph/scr/document_graph to src
+
+or by terminal just running 
+
+```bash
+cp -r document-graph/include/document_graph document-graph/include/logger include/
+cp -r document-graph/src/document_graph src/
+```
 
 
 ## compile contract
 
-` node scripts/commands.js compile CONTRACTNAME`
+To compile one contract, check for the file name as FILENAME.cpp on src/ to see the contract name or in the file scripts/config.js search for the constant 
+`contractsConfig`
+
+command:
+```bash
+node scripts/commands.js compile CONTRACTNAME
+```
 
 ### example:
 
-` node scripts/commands.js compile daoreg`
+```bash
+node scripts/commands.js compile daoreg
+```
 
 ## test
 
-`npm run test`
+To run the test simply run:
+```bash
+npm run test
+```
