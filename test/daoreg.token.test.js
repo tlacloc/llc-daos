@@ -497,7 +497,7 @@ describe('Tests for tokens in dao registry', async function () {
         amount: `100.0000 ${TokenUtil.tokenTest}`,
         sender: daoreg,
         reciever: daoreg,
-        memo: 'token transferred',
+        dao_id: "",
         contract: token_contract
       })
       fail = false
@@ -533,7 +533,7 @@ describe('Tests for tokens in dao registry', async function () {
       amount: `100.0000 ${TokenUtil.tokenTest}`,
       sender: daoreg,
       reciever: alice,
-      memo: 'token transferred',
+      dao_id: "",
       contract: token_contract
     })
 
@@ -582,7 +582,7 @@ describe('Tests for tokens in dao registry', async function () {
         amount: `100.0000 ${TokenUtil.tokenTest}`,
         sender: daoreg,
         reciever: miranda,
-        memo: 'token transferred',
+        dao_id: "",
         contract: token_contract
       })
       fail = false
@@ -622,7 +622,7 @@ describe('Tests for tokens in dao registry', async function () {
         amount: `one hundred ${TokenUtil.tokenTest}`,
         sender: daoreg,
         reciever: alice,
-        memo: 'token transferred',
+        dao_id: "",
         contract: token_contract
       })
       fail = false
@@ -662,7 +662,7 @@ describe('Tests for tokens in dao registry', async function () {
         amount: `-100.0000 ${TokenUtil.tokenTest}`,
         sender: daoreg,
         reciever: alice,
-        memo: 'token transferred',
+        dao_id: "",
         contract: token_contract
       })
       fail = false
@@ -704,7 +704,7 @@ describe('Tests for tokens in dao registry', async function () {
         amount: `${newSupple} ${TokenUtil.tokenTest}`,
         sender: daoreg,
         reciever: alice,
-        memo: 'token transferred',
+        dao_id: "",
         contract: token_contract
       })
       fail = false
@@ -751,7 +751,7 @@ describe('Tests for tokens in dao registry', async function () {
         amount: `100.0000 ${TokenUtil.tokenTest}`,
         sender: daoreg,
         reciever: alice,
-        memo: newMemo,
+        dao_id: newMemo,
         contract: token_contract
       })
       fail = false
@@ -834,7 +834,7 @@ describe('Tests for tokens in dao registry', async function () {
     })
 
 
-    await TokenUtil.daoTransfer({
+    await TokenUtil.transfer({
       amount: `100.0000 ${TokenUtil.tokenTest}`,
       sender: daoreg,
       reciever: dao.params.creator,
@@ -851,7 +851,7 @@ describe('Tests for tokens in dao registry', async function () {
     })
 
     //Act
-    await TokenUtil.daoTransfer({
+    await TokenUtil.transfer({
       amount: `25.0000 ${TokenUtil.tokenTest}`,
       sender: dao.params.creator,
       reciever: daoreg,
@@ -901,7 +901,7 @@ describe('Tests for tokens in dao registry', async function () {
     })
 
 
-    await TokenUtil.daoTransfer({
+    await TokenUtil.transfer({
       amount: `100.0000 ${TokenUtil.tokenTest}`,
       sender: daoreg,
       reciever: dao.params.creator,
@@ -919,11 +919,11 @@ describe('Tests for tokens in dao registry', async function () {
 
     //Act
     try {
-      await TokenUtil.daoTransfer({
+      await TokenUtil.transfer({
         amount: `25.0000 ${TokenUtil.tokenTest}`,
         sender: dao.params.creator,
         reciever: daoreg,
-        dao_id: '',
+        dao_id: ' ',
         contract: token_contract
       })
       fail = false
@@ -962,7 +962,7 @@ describe('Tests for tokens in dao registry', async function () {
     })
 
 
-    await TokenUtil.daoTransfer({
+    await TokenUtil.transfer({
       amount: `100.0000 ${TokenUtil.tokenTest}`,
       sender: daoreg,
       reciever: dao.params.creator,
@@ -980,7 +980,7 @@ describe('Tests for tokens in dao registry', async function () {
 
     //Act
     try {
-      await TokenUtil.daoTransfer({
+      await TokenUtil.transfer({
         amount: `25.0000 ${TokenUtil.tokenTest}`,
         sender: dao.params.creator,
         reciever: daoreg,
@@ -1021,7 +1021,7 @@ describe('Tests for tokens in dao registry', async function () {
     })
 
 
-    await TokenUtil.daoTransfer({
+    await TokenUtil.transfer({
       amount: `100.0000 ${TokenUtil.tokenTest}`,
       sender: daoreg,
       reciever: dao.params.creator,
@@ -1040,11 +1040,11 @@ describe('Tests for tokens in dao registry', async function () {
 
     // //Act
     try {
-      await TokenUtil.daoTransfer({
+      await TokenUtil.transfer({
         amount: `25.0000 ${TokenUtil.tokenTest2}`,
         sender: dao.params.creator,
         reciever: daoreg,
-        dao_id: 0,
+        dao_id: 1,
         contract: token_contract
       })
       fail = false
@@ -1081,7 +1081,7 @@ describe('Tests for tokens in dao registry', async function () {
     })
 
 
-    await TokenUtil.daoTransfer({
+    await TokenUtil.transfer({
       amount: `100.0000 ${TokenUtil.tokenTest}`,
       sender: daoreg,
       reciever: dao.params.creator,
@@ -1100,7 +1100,7 @@ describe('Tests for tokens in dao registry', async function () {
 
     //Act
     try {
-      await TokenUtil.daoTransfer({
+      await TokenUtil.transfer({
         amount: `25.0000 ${TokenUtil.tokenTest}`,
         sender: dao.params.creator,
         reciever: daoreg,
@@ -1142,7 +1142,7 @@ describe('Tests for tokens in dao registry', async function () {
       memo: 'issued token'
     })
 
-    await TokenUtil.daoTransfer({
+    await TokenUtil.transfer({
       amount: `100.0000 ${TokenUtil.tokenTest}`,
       sender: daoreg,
       reciever: dao.params.creator,
@@ -1161,7 +1161,7 @@ describe('Tests for tokens in dao registry', async function () {
 
     //Act
     try {
-      await TokenUtil.daoTransfer({
+      await TokenUtil.transfer({
         amount: `25.0000 ${TokenUtil.tokenTest}`,
         sender: dao.params.creator,
         reciever: daoreg,
@@ -1202,7 +1202,7 @@ describe('Tests for tokens in dao registry', async function () {
       memo: 'issued token'
     })
 
-    await TokenUtil.daoTransfer({
+    await TokenUtil.transfer({
       amount: `100.0000 ${TokenUtil.tokenTest}`,
       sender: daoreg,
       reciever: dao.params.creator,
@@ -1221,11 +1221,11 @@ describe('Tests for tokens in dao registry', async function () {
 
     //Act
     try {
-      await TokenUtil.daoTransfer({
+      await TokenUtil.transfer({
         amount: `125.0000 ${TokenUtil.tokenTest}`,
         sender: dao.params.creator,
         reciever: daoreg,
-        dao_id: 2,
+        dao_id: 1,
         contract: token_contract
       })
 
@@ -1395,14 +1395,14 @@ describe('Tests for tokens in dao registry', async function () {
       amount: `2000.0000 ${TokenUtil.tokenTest}`,
       sender: daoreg,
       reciever: tester1,
-      memo: "transfer",
+      dao_id: "",
       contract: token_contract
     })
     await TokenUtil.transfer({
       amount: `1000.0000 ${TokenUtil.tokenTest}`,
       sender: daoreg,
       reciever: tester2,
-      memo: "transfer",
+      dao_id: "",
       contract: token_contract
     })
 
@@ -1411,14 +1411,14 @@ describe('Tests for tokens in dao registry', async function () {
       amount: `2000.0000 ${TokenUtil.tokenTest2}`,
       sender: daoinf,
       reciever: tester1,
-      memo: "transfer",
+      dao_id: "",
       contract: token_contract_2
     })
     await TokenUtil.transfer({
       amount: `1000.0000 ${TokenUtil.tokenTest2}`,
       sender: daoinf,
       reciever: tester2,
-      memo: "transfer",
+      dao_id: "",
       contract: token_contract_2
     })
 
@@ -1504,14 +1504,14 @@ describe('Tests for tokens in dao registry', async function () {
       amount: `2000.0000 ${TokenUtil.tokenTest}`,
       sender: daoreg,
       reciever: tester1,
-      memo: "transfer",
+      dao_id: "",
       contract: token_contract
     })
     await TokenUtil.transfer({
       amount: `1000.0000 ${TokenUtil.tokenTest2}`,
       sender: daoinf,
       reciever: tester1,
-      memo: "transfer",
+      dao_id: "",
       contract: token_contract
     })
 
@@ -1569,7 +1569,7 @@ describe('Tests for tokens in dao registry', async function () {
       memo: 'issued token'
     })
 
-    await TokenUtil.daoTransfer({
+    await TokenUtil.transfer({
       amount: `100.0000 ${TokenUtil.tokenTest}`,
       sender: daoreg,
       reciever: dao.params.creator,
@@ -1585,11 +1585,11 @@ describe('Tests for tokens in dao registry', async function () {
       contract: contracts.daoreg
     })
 
-    await TokenUtil.daoTransfer({
+    await TokenUtil.transfer({
       amount: `75.0000 ${TokenUtil.tokenTest}`,
       sender: dao.params.creator,
       reciever: daoreg,
-      dao_id: "1",
+      dao_id: 1,
       contract: token_contract
     })
 
@@ -1649,7 +1649,7 @@ describe('Tests for tokens in dao registry', async function () {
       memo: 'issued token'
     })
 
-    await TokenUtil.daoTransfer({
+    await TokenUtil.transfer({
       amount: `100.0000 ${TokenUtil.tokenTest}`,
       sender: daoreg,
       reciever: dao.params.creator,
@@ -1665,11 +1665,11 @@ describe('Tests for tokens in dao registry', async function () {
       contract: contracts.daoreg
     })
 
-    await TokenUtil.daoTransfer({
+    await TokenUtil.transfer({
       amount: `75.0000 ${TokenUtil.tokenTest}`,
       sender: dao.params.creator,
       reciever: daoreg,
-      dao_id: "1",
+      dao_id: 1,
       contract: token_contract
     })
 
@@ -1730,7 +1730,7 @@ describe('Tests for tokens in dao registry', async function () {
       memo: 'issued token'
     })
 
-    await TokenUtil.daoTransfer({
+    await TokenUtil.transfer({
       amount: `100.0000 ${TokenUtil.tokenTest}`,
       sender: daoreg,
       reciever: dao.params.creator,
@@ -1746,11 +1746,11 @@ describe('Tests for tokens in dao registry', async function () {
       contract: contracts.daoreg
     })
 
-    await TokenUtil.daoTransfer({
+    await TokenUtil.transfer({
       amount: `75.0000 ${TokenUtil.tokenTest}`,
       sender: dao.params.creator,
       reciever: daoreg,
-      dao_id: "1",
+      dao_id: 1,
       contract: token_contract
     })
 
@@ -1806,7 +1806,7 @@ describe('Tests for tokens in dao registry', async function () {
       memo: 'issued token'
     })
 
-    await TokenUtil.daoTransfer({
+    await TokenUtil.transfer({
       amount: `100.0000 ${TokenUtil.tokenTest}`,
       sender: daoreg,
       reciever: dao.params.creator,
@@ -1822,11 +1822,11 @@ describe('Tests for tokens in dao registry', async function () {
       contract: contracts.daoreg
     })
 
-    await TokenUtil.daoTransfer({
+    await TokenUtil.transfer({
       amount: `75.0000 ${TokenUtil.tokenTest}`,
       sender: dao.params.creator,
       reciever: daoreg,
-      dao_id: "1",
+      dao_id: 1,
       contract: token_contract
     })
 
@@ -1888,6 +1888,5 @@ describe('Tests for tokens in dao registry', async function () {
 
 
   })
-
 
 })

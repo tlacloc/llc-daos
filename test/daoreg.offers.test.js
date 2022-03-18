@@ -72,7 +72,8 @@ describe('Tests for offers in dao registry', async function () {
       token_account: eosio_account,
       issuer: daoreg,
       max_supply: `1000000000000.0000 ${TokenUtil.tokenCode}`,
-      issue_amount: `1000000.0000 ${TokenUtil.tokenCode}`
+      issue_amount: `1000000.0000 ${TokenUtil.tokenCode}`,
+      memo: 'Issued token'
     })
 
     // create testing accounts
@@ -84,14 +85,14 @@ describe('Tests for offers in dao registry', async function () {
       amount: `1000.0000 ${TokenUtil.tokenCode}`,
       sender: daoreg,
       reciever: alice,
-      memo: "transfer token",
+      dao_id: "",
       contract: eosio_token_contract
     })
     await TokenUtil.transfer({
       amount: `1000.0000 ${TokenUtil.tokenCode}`,
       sender: daoreg,
       reciever: bob,
-      memo: "transfer token",
+      dao_id: "",
       contract: eosio_token_contract
     })
 
@@ -123,11 +124,11 @@ describe('Tests for offers in dao registry', async function () {
       amount: "100.0000 DTK",
       sender: daoreg,
       reciever: dao_creator,
-      memo: "",
+      dao_id: "",
       contract: token_contract
     })
 
-    await TokenUtil.createFromDao({
+    await TokenUtil.addTokenToDao({
       dao_id: 1,
       token_contract: token_account,
       token_symbol: `4,DTK`,
@@ -443,104 +444,104 @@ describe('Tests for offers in dao registry', async function () {
 
   })
 
-
-  it('Create more offers', async function () {
-
-    // Arrange
-    const dao = await DaosFactory.createWithDefaults({})
-    const actionParams = dao.getActionParams()
-
-    await contracts.daoreg.create(...actionParams, { authorization: `${dao.params.dao}@active` })
-
-    const [token_contract, token_account] = await TokenUtil.createTokenContract();
-
-    await TokenUtil.initToken({
-      token_contract: token_contract,
-      token_account: token_account,
-      issuer: daoreg,
-      max_supply: `1000000000000.0000 DTK`,
-      issue_amount: `1000000.0000 DTK`
+  /*
+    it('Create more offers', async function () {
+  
+      // Arrange
+      const dao = await DaosFactory.createWithDefaults({})
+      const actionParams = dao.getActionParams()
+  
+      await contracts.daoreg.create(...actionParams, { authorization: `${dao.params.dao}@active` })
+  
+      const [token_contract, token_account] = await TokenUtil.createTokenContract();
+  
+      await TokenUtil.initToken({
+        token_contract: token_contract,
+        token_account: token_account,
+        issuer: daoreg,
+        max_supply: `1000000000000.0000 DTK`,
+        issue_amount: `1000000.0000 DTK`
+      })
+  
+      await TokenUtil.transfer({
+        amount: "1000.0000 DTK",
+        sender: daoreg,
+        reciever: dao.params.creator,
+        dao_id: "",
+        contract: token_contract
+      })
+  
+      await TokenUtil.createFromDao({
+        dao_id: 1,
+        token_contract: token_account,
+        token_symbol: `4,DTK`,
+        daoCreator: dao.params.creator,
+        contract: contracts.daoreg,
+        issuer: dao.params.creator,
+        reciever: daoreg
+      })
+  
+  
+      const offer_buy = await OffersFactory.createWithDefaults({ type: OfferConstants.buy })
+      const actionOfferBuyCreateParams = offer_buy.getActionParams()
+  
+      console.log("offer: buy", actionOfferBuyCreateParams)
+      await contracts.daoreg.createoffer(...actionOfferBuyCreateParams, { authorization: `${offer_buy.params.creator}@active` })
+  
+      await sleep(1000)
+  
+      const offer_sell = await OffersFactory.createWithDefaults({ type: OfferConstants.sell })
+      const actionOfferSellCreateParams = offer_sell.getActionParams()
+  
+      console.log("offer: sell", actionOfferSellCreateParams)
+      await contracts.daoreg.createoffer(...actionOfferSellCreateParams, { authorization: `${offer_sell.params.creator}@active` })
+  
+      await sleep(1000)
+  
+      const offer_sell2 = await OffersFactory.createWithDefaults({ type: OfferConstants.sell })
+      const actionOfferSellCreateParams2 = offer_sell2.getActionParams()
+  
+      console.log("offer: sell", actionOfferSellCreateParams)
+      await contracts.daoreg.createoffer(...actionOfferSellCreateParams2, { authorization: `${offer_sell2.params.creator}@active` })
+  
+      await sleep(1000)
+  
+      const offer_buy2 = await OffersFactory.createWithDefaults({ type: OfferConstants.buy })
+      const actionOfferBuyCreateParams2 = offer_buy2.getActionParams()
+  
+      console.log("offer: buy", actionOfferBuyCreateParams2)
+      await contracts.daoreg.createoffer(...actionOfferBuyCreateParams2, { authorization: `${offer_buy2.params.creator}@active` })
+  
+      // Act
+  
+  
+  
+      // Assert
+      const tokenTable = await rpc.get_table_rows({
+        code: daoreg,
+        scope: 1,
+        table: 'tokens',
+        json: true,
+        limit: 100
+      })
+  
+      console.log(tokenTable)
+  
+      const offerTable = await rpc.get_table_rows({
+        code: daoreg,
+        scope: 1,
+        table: 'offers',
+        json: true,
+        limit: 100
+      })
+  
+      console.log(offerTable.rows)
+  
+  
+  
     })
-
-    await TokenUtil.transfer({
-      amount: "1000.0000 DTK",
-      sender: daoreg,
-      reciever: dao.params.creator,
-      dao_id: "",
-      contract: token_contract
-    })
-
-    await TokenUtil.createFromDao({
-      dao_id: 1,
-      token_contract: token_account,
-      token_symbol: `4,DTK`,
-      daoCreator: dao.params.creator,
-      contract: contracts.daoreg,
-      issuer: dao.params.creator,
-      reciever: daoreg
-    })
-
-
-    const offer_buy = await OffersFactory.createWithDefaults({ type: OfferConstants.buy })
-    const actionOfferBuyCreateParams = offer_buy.getActionParams()
-
-    console.log("offer: buy", actionOfferBuyCreateParams)
-    await contracts.daoreg.createoffer(...actionOfferBuyCreateParams, { authorization: `${offer_buy.params.creator}@active` })
-
-    await sleep(1000)
-
-    const offer_sell = await OffersFactory.createWithDefaults({ type: OfferConstants.sell })
-    const actionOfferSellCreateParams = offer_sell.getActionParams()
-
-    console.log("offer: sell", actionOfferSellCreateParams)
-    await contracts.daoreg.createoffer(...actionOfferSellCreateParams, { authorization: `${offer_sell.params.creator}@active` })
-
-    await sleep(1000)
-
-    const offer_sell2 = await OffersFactory.createWithDefaults({ type: OfferConstants.sell })
-    const actionOfferSellCreateParams2 = offer_sell2.getActionParams()
-
-    console.log("offer: sell", actionOfferSellCreateParams)
-    await contracts.daoreg.createoffer(...actionOfferSellCreateParams2, { authorization: `${offer_sell2.params.creator}@active` })
-
-    await sleep(1000)
-
-    const offer_buy2 = await OffersFactory.createWithDefaults({ type: OfferConstants.buy })
-    const actionOfferBuyCreateParams2 = offer_buy2.getActionParams()
-
-    console.log("offer: buy", actionOfferBuyCreateParams2)
-    await contracts.daoreg.createoffer(...actionOfferBuyCreateParams2, { authorization: `${offer_buy2.params.creator}@active` })
-
-    // Act
-
-
-
-    // Assert
-    const tokenTable = await rpc.get_table_rows({
-      code: daoreg,
-      scope: 1,
-      table: 'tokens',
-      json: true,
-      limit: 100
-    })
-
-    console.log(tokenTable)
-
-    const offerTable = await rpc.get_table_rows({
-      code: daoreg,
-      scope: 1,
-      table: 'offers',
-      json: true,
-      limit: 100
-    })
-
-    console.log(offerTable.rows)
-
-
-
-  })
-
-
-
+  
+  
+  */
 })
 
