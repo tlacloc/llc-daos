@@ -1,24 +1,13 @@
-const assert = require('assert')
 const { rpc } = require('../scripts/eos')
-const { getContracts, createRandomAccount, randomAccountName, Asset } = require('../scripts/eosio-util')
+const { getContracts, createRandomAccount } = require('../scripts/eosio-util')
 const { assertError } = require('../scripts/eosio-errors')
-
 const { contractNames, contracts: configContracts, isLocalNode, sleep } = require('../scripts/config')
-
 const { getParams, setParamsValue } = require('../scripts/contract-settings')
-
-const { AssertionError } = require('assert')
 const { updatePermissions } = require('../scripts/permissions')
-const { SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG } = require('constants')
-
 const { EnvironmentUtil } = require('./util/EnvironmentUtil')
-
 const { TokenUtil } = require('./util/TokenUtil')
 const { DaosFactory } = require('./util/DaoUtil')
-const { OffersFactory, OfferConstants } = require('./util/OfferUtil')
-
 const expect = require('chai').expect
-
 const { daoreg, tlostoken } = contractNames
 
 
