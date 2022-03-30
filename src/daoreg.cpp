@@ -318,6 +318,7 @@ ACTION daoreg::createoffer (
   check(sitr != token_by_symbol.end(), "createoffer: Token not found");
 
   // has_enough_balance(dao_id, creator, quantity); // balances table daoreg
+  // sell_offer -> type = 0, buy_offer -> type = 1
 
   if ( type == util::type_sell_offer) {
 
@@ -358,7 +359,45 @@ void daoreg::storeoffer (
                       + (uint128_t(0xFFFFFFFFFFFFFFFF & price_per_unit.amount)  << 56 ) 
                       + (uint128_t(0xFFFFFFFFFFFFFF   &  std::numeric_limits<uint64_t>::max() - current_time_point().sec_since_epoch()));
     });
+	// const uint8_t type_sell_offer = 0;
+	// const uint8_t type_buy_offer = 1;
 
+  if (type == 0) {
+    name token_account = get_token_account( dao_id, quantity.symbol);
+
+    balances_table _balances(get_self(), creator.value);
+    auto balances_by_token_account_token = _balances.get_index<name("bytkaccttokn")>();
+    auto itr = balances_by_token_account_token.find((uint128_t(token_account.value) << 64) + quantity.symbol.raw());
+    
+    balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
+    user.available -= quantity;
+    user.locked += quantity;
+    });
+
+  } else if (type == 1) {
+    name system_token_account = get_token_account( dao_id, price_per_unit.symbol );
+    
+    balances_table _balances(get_self(), creator.value);
+    auto balances_by_token_account_token = _balances.get_index<name("bytkaccttokn")>();
+    auto itr = balances_by_token_account_token.find((uint128_t(system_token_account.value) << 64) + price_per_unit.symbol.raw());
+    
+    balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
+    user.available -= price_per_unit;
+    user.locked += price_per_unit;
+    });
+  }
+
+  //->locked dtk o locked tlos
+  // name token_account = get_token_account( dao_id, quantity.symbol);
+
+  // balances_table _balances(get_self(), creator.value);
+  // auto balances_by_token_account_token = _balances.get_index<name("bytkaccttokn")>();
+  // auto itr = balances_by_token_account_token.find((uint128_t(token_account.value) << 64) + quantity.symbol.raw());
+  
+  // balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
+  // user.available -= quantity;
+  // user.locked += quantity;
+  // });
 
 }
 
@@ -389,6 +428,7 @@ void daoreg::createbuyoffer (
     storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::status_active, util::type_buy_offer);
 
   } else {
+    storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::status_active, util::type_buy_offer);
 
     action(
       permission_level{ creator, name("active") },
@@ -426,7 +466,7 @@ void daoreg::createselloffer (
     storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::status_active, util::type_sell_offer);
 
   } else {
-    
+    storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::status_active, util::type_sell_offer);
     action(
       permission_level{ creator, name("active") },
       _self,
@@ -501,6 +541,7 @@ void daoreg::resolve_buy_offer(
 
   asset cost = asset( ofit->available_quantity.amount * ofit->price_per_unit.amount / 10000, ofit->price_per_unit.symbol );  
   has_enough_balance(dao_id, seller, ofit->available_quantity);
+  //esto es lo que lockeo si es una oferta de compra 
 
   name daos_token_account = get_token_account( dao_id, ofit->available_quantity.symbol );
   name system_token_account = get_token_account( dao_id, ofit->price_per_unit.symbol );
@@ -548,20 +589,25 @@ void daoreg::resolve_sell_offer(
   asset cost = asset( ofit->available_quantity.amount * ofit->price_per_unit.amount / 10000, ofit->price_per_unit.symbol );  
   has_enough_balance(dao_id, buyer, cost);
 
+  //to use DTK
   name daos_token_account = get_token_account( dao_id, ofit->available_quantity.symbol );
+  //to use TLOS
   name system_token_account = get_token_account( dao_id, ofit->price_per_unit.symbol );
 
   // transfer system tokens
+  //trabaja con eosio.token tabla de accounts (?)
   add_balance( ofit->creator, cost, system_token_account, dao_id );
   remove_balance( buyer, cost, system_token_account, dao_id );
 
 
   // transfer daos tokens
+  //trabaja con daoreg tabla balances
   remove_balance( ofit->creator, ofit->available_quantity, daos_token_account, dao_id );
   add_balance( buyer, ofit->available_quantity, daos_token_account, dao_id );
 
   offer_t.modify(ofit, get_self(), [&](auto& item){
     item.available_quantity = asset(0, ofit-> available_quantity.symbol);
+    //item.available_quantity -=  quantity; ->casos donde la compra de la oferta no es total
     item.status = util::status_closed;
   });
 
@@ -590,7 +636,7 @@ void daoreg::add_balance(
     });
   } else {
     balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
-      user.available += quantity;
+      user.available += quantity; 
     });
   }
 
@@ -612,9 +658,11 @@ void daoreg::remove_balance(
   check(itr->available >= quantity, "You do not have enough balance");
 
   balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
-    user.available -= quantity;
+    //user.available -= quantity; //este no ve modificado pues su available no cambia con esta fucnion
+    user.locked -= quantity;
+    //suponiendo compras completas
+    //
   });
-
 }
 
 void daoreg::send_transfer(

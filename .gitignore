@@ -6,3 +6,5 @@ compiled
 include/document_graph
 include/logger
 src/document_graph
+test/probs.js
+test/probs.cpp
