@@ -321,14 +321,10 @@ describe('Tests for offers in dao registry', async function () {
   it('Create a buy offer', async function () {
 
     // Arrange
-    const newquantity = `1.0000 ${TokenUtil.tokenTest}`    
-    const offer = await OffersFactory.createWithDefaults({ creator: alice, type: OfferConstants.buy, quantity:newquantity })
+    const offer = await OffersFactory.createWithDefaults({ creator: alice, type: OfferConstants.buy})
 
     console.log(`offer in create a buy offer: `, offer, '\n')
     const actionOfferCreateParams = offer.getActionParams()
-
-
-
 
     await TokenUtil.transfer({ // deposit to dao
       amount: `10.0000 ${TokenUtil.tokenCode}`,
@@ -461,22 +457,6 @@ describe('Tests for offers in dao registry', async function () {
     })
     console.log('AFTER balancetable offer_match is: ', JSON.stringify(balancetable, null , ' '), '\n')
 
-
-    // expect(offerTable.rows).to.deep.equals([{
-    //   offer_id: 0,
-    //   creator: offer_sell.params.creator,
-    //   available_quantity: "0.0000 DTK",
-    //   total_quantity: offer_sell.params.quantity,
-    //   price_per_unit: offer_sell.params.price_per_unit,
-    //   convertion_info: [],
-    //   status: 0,
-    //   creation_date: offerTable.rows[0].creation_date,
-    //   type: offer_sell.params.type,
-    //   token_idx: 1,
-    //   match_id: offerTable.rows[0].match_id
-
-    // }])
-
     //users balances
     const bobsBalance = await rpc.get_table_rows({
       code: daoreg,
@@ -485,8 +465,6 @@ describe('Tests for offers in dao registry', async function () {
       json: true,
       limit: 100
     })
-
-
 
     expect(bobsBalance.rows).to.deep.equals([{
       id: 0,
@@ -530,10 +508,7 @@ describe('Tests for offers in dao registry', async function () {
   })
   
 
-
   it('Offer match (buy -> sell) - sell offer is accepted insted of create a new one', async function () {
-
-
     // Arrange
     await TokenUtil.transfer({ // deposit to dao
       amount: `10.0000 ${TokenUtil.tokenCode}`,
@@ -551,7 +526,9 @@ describe('Tests for offers in dao registry', async function () {
       contract: eosio_token_contract
     })
 
-    const offer_buy = await OffersFactory.createWithDefaults({ creator: alice, type: OfferConstants.buy })
+    const newBuyQuantity = `10.0000 ${TokenUtil.tokenTest}`
+    const newSellQuantity = `10.0000 ${TokenUtil.tokenTest}`
+    const offer_buy = await OffersFactory.createWithDefaults({ creator: alice, type: OfferConstants.buy, quantity:newBuyQuantity })
     console.log('Offer_buy is: ', offer_buy, '\n\n')
     const actionOfferBuyCreateParams = offer_buy.getActionParams()
     await contracts.daoreg.createoffer(...actionOfferBuyCreateParams, { authorization: `${offer_buy.params.creator}@active` })
@@ -574,12 +551,14 @@ describe('Tests for offers in dao registry', async function () {
     })
     console.log('BEFORE offer_sell balancetable  is: ', JSON.stringify(balancetable, null , ' '), '\n')
 
-    
-    const offer_sell = await OffersFactory.createWithDefaults({ creator: bob, type: OfferConstants.sell })
+    // Act
+    const offer_sell = await OffersFactory.createWithDefaults({ creator: bob, type: OfferConstants.sell, quantity:newSellQuantity })
     console.log('Offer_sell is: ', offer_sell, '\n\n')
     const actionOfferSellCreateParams = offer_sell.getActionParams()
     await contracts.daoreg.createoffer(...actionOfferSellCreateParams, { authorization: `${offer_sell.params.creator}@active` })
 
+    
+    //Assert
     const offerTable1 = await rpc.get_table_rows({
       code: daoreg,
       scope: 1,
@@ -600,28 +579,6 @@ describe('Tests for offers in dao registry', async function () {
 
 
 
-    
-    
-
-    // Act
-
-    // Assert
-
-    // expect(offerTable.rows).to.deep.equals([{
-    //   offer_id: 0,
-    //   creator: offer_sell.params.creator,
-    //   available_quantity: "0.0000 DTK",
-    //   total_quantity: offer_sell.params.quantity,
-    //   price_per_unit: offer_sell.params.price_per_unit,
-    //   convertion_info: [],
-    //   status: 0,
-    //   creation_date: offerTable.rows[0].creation_date,
-    //   type: offer_sell.params.type,
-    //   token_idx: 1,
-    //   match_id: offerTable.rows[0].match_id
-
-    // }])
-
     //users balances
     const bobsBalance = await rpc.get_table_rows({
       code: daoreg,
@@ -631,17 +588,15 @@ describe('Tests for offers in dao registry', async function () {
       limit: 100
     })
 
-
-
     expect(bobsBalance.rows).to.deep.equals([{
       id: 0,
-      available: "99.0000 DTK",
+      available: "90.0000 DTK",
       locked: "0.0000 DTK",
       dao_id: 1,
       token_account: bobsBalance.rows[0].token_account
     }, {
       id: 1,
-      available: "10.1000 TLOS",
+      available: "11.0000 TLOS",
       locked: "0.0000 TLOS",
       dao_id: 0,
       token_account: bobsBalance.rows[1].token_account
@@ -658,13 +613,13 @@ describe('Tests for offers in dao registry', async function () {
 
     expect(alicesBalance.rows).to.deep.equals([{
       id: 0,
-      available: "101.0000 DTK",
+      available: "110.0000 DTK",
       locked: "0.0000 DTK",
       dao_id: 1,
       token_account: alicesBalance.rows[0].token_account
     }, {
       id: 1,
-      available: "9.9000 TLOS",
+      available: "9.0000 TLOS",
       locked: "0.0000 TLOS",
       dao_id: 0,
       token_account: alicesBalance.rows[1].token_account
@@ -672,6 +627,108 @@ describe('Tests for offers in dao registry', async function () {
     }])
 
   })
+
+  it('Store offers without match', async function() {
+    // Arrange
+    const offer_buy = await OffersFactory.createWithDefaults({ creator: alice, type: OfferConstants.sell})
+    console.log('offer_buy is: ', offer_buy, '\n\n')
+    const actionOfferBuyCreateParams = offer_buy.getActionParams()
+    await contracts.daoreg.createoffer(...actionOfferBuyCreateParams, { authorization: `${offer_buy.params.creator}@active` })
+    await sleep(1000);
+
+    const offerTable2 = await rpc.get_table_rows({
+      code: daoreg,
+      scope: 1,
+      table: 'offers',
+      json: true,
+      limit: 100
+    })
+    console.log('AFTER  first offer is: ', offerTable2, '\n')
+
+    await TokenUtil.transfer({ // deposit to dao
+      amount: `10.0000 ${TokenUtil.tokenCode}`,
+      sender: alice,
+      reciever: daoreg,
+      dao_id: "0",
+      contract: eosio_token_contract
+    })
+    await TokenUtil.transfer({ // deposit to dao
+      amount: `10.0000 ${TokenUtil.tokenCode}`,
+      sender: bob,
+      reciever: daoreg,
+      dao_id: "0",
+      contract: eosio_token_contract
+    })
+    
+    //Act
+    const offer_buy2 = await OffersFactory.createWithDefaults({ creator: bob, type: OfferConstants.buy})
+    console.log('offer_buy2 is: ', offer_buy2)
+    const actionOfferBuyCreateParams2 = offer_buy2.getActionParams()
+    await contracts.daoreg.createoffer(...actionOfferBuyCreateParams2, { authorization: `${offer_buy2.params.creator}@active` })
+    await sleep(1000);
+    
+    const offerTable3 = await rpc.get_table_rows({
+      code: daoreg,
+      scope: 1,
+      table: 'offers',
+      json: true,
+      limit: 100
+    })
+    console.log('AFTER  second offer is: ', offerTable3, '\n')
+
+
+    //Assert
+    
+    const bobsBalance = await rpc.get_table_rows({
+      code: daoreg,
+      scope: bob,
+      table: 'balances',
+      json: true,
+      limit: 100
+    })
+    console.log('bob balance is: ', bobsBalance, '\n\n')
+
+    expect(bobsBalance.rows).to.deep.equals([{
+      id: 0,
+      available: "101.0000 DTK",
+      locked: "0.0000 DTK",
+      dao_id: 1,
+      token_account: bobsBalance.rows[0].token_account
+    }, {
+      id: 1,
+      available: "9.9000 TLOS",
+      locked: "0.0000 TLOS",
+      dao_id: 0,
+      token_account: bobsBalance.rows[1].token_account
+
+    }])
+
+    const aliceBalance = await rpc.get_table_rows({
+      code: daoreg,
+      scope: alice,
+      table: 'balances',
+      json: true,
+      limit: 100
+    })
+    console.log('alice balance is: ', aliceBalance, '\n\n')
+
+    expect(aliceBalance.rows).to.deep.equals([{
+      id: 0,
+      available: "99.0000 DTK",
+      locked: "0.0000 DTK",
+      dao_id: 1,
+      token_account: aliceBalance.rows[0].token_account
+    }, {
+      id: 1,
+      available: "10.1000 TLOS",
+      locked: "0.0000 TLOS",
+      dao_id: 0,
+      token_account: aliceBalance.rows[1].token_account
+
+    }])
+
+  })
+  
 
   /*
     it('Create more offers', async function () {
