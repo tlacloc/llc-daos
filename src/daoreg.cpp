@@ -343,10 +343,12 @@ void daoreg::storeoffer (
 
   offers_table offer_t(get_self(), dao_id);
 
+  const eosio::asset new_quantity = (status == util::status_closed) ? asset(0, quantity.symbol) : quantity;
+
   offer_t.emplace(get_self(), [&](auto & item){
     item.offer_id = offer_t.available_primary_key();
     item.creator = creator;
-    item.available_quantity = quantity;
+    item.available_quantity = new_quantity;
     item.total_quantity = quantity;
     item.price_per_unit = price_per_unit; // always in TLOS  tlostoken
     item.status = status;
