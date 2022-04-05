@@ -376,7 +376,8 @@ void daoreg::storeoffer (
     user.locked += quantity;
     });
 
-  } else if (type == util::type_buy_offer) {
+  } 
+  else if (type == util::type_buy_offer) {
     name system_token_account = get_token_account( dao_id, price_per_unit.symbol );
     
     balances_table _balances(get_self(), creator.value);
@@ -386,8 +387,6 @@ void daoreg::storeoffer (
     balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
     user.available -= asset(price_per_unit.amount * quantity.amount /10000, price_per_unit.symbol);;
     user.locked += asset(price_per_unit.amount * quantity.amount /10000, price_per_unit.symbol);
-    //user.available -= price_per_unit;
-    //user.locked += price_per_unit;
     });
   }
 
@@ -408,8 +407,6 @@ void daoreg::createbuyoffer (
   auto by_offer_match = offer_t.get_index<eosio::name("byoffermatch")>();
 
   // offer match
-  // el match id para este caso no esta funcionado como debería
-  // 
   auto soitr_buy = by_offer_match.lower_bound(
       ( uint128_t(0xF & util::type_sell_offer) << 124 ) 
      + ( uint128_t(0xF & util::status_active) << 122 )
@@ -454,11 +451,9 @@ void daoreg::createselloffer (
      + ( uint128_t(0xF & token_id) << 120 )
      + ( uint128_t(0xFFFFFFFFFFFFFFFF & price_per_unit.amount ) << 56 )  
     );
-  
-  bool offer_not_exists = (boitr_sell == by_offer_match.end() || boitr_sell -> type != util::type_buy_offer);
+  const bool offer_not_exists = (boitr_sell == by_offer_match.end() || boitr_sell -> type != util::type_buy_offer);
 
-  if (offer_not_exists) {
-
+  if (offer_not_exists) { 
     storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::status_active, util::type_sell_offer);
 
   } else {

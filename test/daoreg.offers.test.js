@@ -343,6 +343,14 @@ describe('Tests for offers in dao registry', async function () {
     })
     console.log('BEFORE balancetable create_buy_offer is: ', balancetable, '\n')
 
+    const offerTable1 = await rpc.get_table_rows({
+      code: daoreg,
+      scope: 1,
+      table: 'offers',
+      json: true,
+      limit: 100
+    })
+    console.log('BEFORE offertable from create buy offer is: ', offerTable1, '\n')
 
     // Act
     await contracts.daoreg.createoffer(...actionOfferCreateParams, { authorization: `${offer.params.creator}@active` })
@@ -506,7 +514,6 @@ describe('Tests for offers in dao registry', async function () {
 
 
   })
-  
 
   it('Offer match (buy -> sell) - sell offer is accepted insted of create a new one', async function () {
     // Arrange
@@ -551,13 +558,14 @@ describe('Tests for offers in dao registry', async function () {
     })
     console.log('BEFORE offer_sell balancetable  is: ', JSON.stringify(balancetable, null , ' '), '\n')
 
-    // Act
+
     const offer_sell = await OffersFactory.createWithDefaults({ creator: bob, type: OfferConstants.sell, quantity:newSellQuantity })
     console.log('Offer_sell is: ', offer_sell, '\n\n')
     const actionOfferSellCreateParams = offer_sell.getActionParams()
+    
+    // Act
     await contracts.daoreg.createoffer(...actionOfferSellCreateParams, { authorization: `${offer_sell.params.creator}@active` })
 
-    
     //Assert
     const offerTable1 = await rpc.get_table_rows({
       code: daoreg,
