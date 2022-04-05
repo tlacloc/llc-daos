@@ -372,8 +372,8 @@ void daoreg::storeoffer (
     auto itr = balances_by_token_account_token.find((uint128_t(token_account.value) << 64) + quantity.symbol.raw());
     
     balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
-    user.available -= quantity;
-    user.locked += quantity;
+      user.available -= quantity;
+      user.locked += quantity;
     });
 
   } 
@@ -385,8 +385,8 @@ void daoreg::storeoffer (
     auto itr = balances_by_token_account_token.find((uint128_t(system_token_account.value) << 64) + price_per_unit.symbol.raw());
     
     balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
-    user.available -= asset(price_per_unit.amount * quantity.amount /10000, price_per_unit.symbol);;
-    user.locked += asset(price_per_unit.amount * quantity.amount /10000, price_per_unit.symbol);
+      user.available -= asset(price_per_unit.amount * quantity.amount /10000, price_per_unit.symbol);;
+      user.locked += asset(price_per_unit.amount * quantity.amount /10000, price_per_unit.symbol);
     });
   }
 
