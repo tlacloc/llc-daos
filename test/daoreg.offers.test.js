@@ -635,6 +635,7 @@ describe('Tests for offers in dao registry', async function () {
     }])
 
   })
+
   /*
     it('Create more offers', async function () {
   

@@ -414,12 +414,28 @@ void daoreg::createbuyoffer (
      + ( uint128_t(0xFFFFFFFFFFFFFFFF & price_per_unit.amount ) << 56 )   
     );
 
+  //check(soitr_buy -> type == util::type_sell_offer, "Both offers are of the same type");
+  //check(soitr_buy -> status == util::status_closed, "Offer is not active");
+  //check(soitr_buy -> token_idx)
+
+  bool offer_match = meets_requirements( 
+                      soitr_buy -> type, 
+                      soitr_buy -> status, 
+                      soitr_buy -> token_idx,
+                      soitr_buy -> price_per_unit,
+                      soitr_buy -> available_quantity,
+                      util::type_buy_offer,
+                      token_id, 
+                      price_per_unit,
+                      quantity);
+
   bool offer_not_exists = (soitr_buy == by_offer_match.end() || soitr_buy -> type != util::type_sell_offer);
   
   if (offer_not_exists) { 
     storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::status_active, util::type_buy_offer);
   
   } else {
+    check(offer_match = true, "offer does not match");
     storeoffer(dao_id, creator,  quantity, price_per_unit, token_id, util::status_closed, util::type_buy_offer);
     action(
       permission_level{ creator, name("active") },
@@ -794,3 +810,37 @@ name daoreg::get_token_account(const uint64_t & dao_id, const symbol & token_sym
   return token_account;
 
 }
+
+bool daoreg::meets_requirements(
+  const uint8_t & type_offer,
+  const uint8_t & status_offer,
+  const uint8_t & token_idx_offer,
+  const asset & price_per_unit_offer,
+  const asset & available_quantity_offer,
+  const uint8_t & type, 
+  const uint8_t & token_id,
+  const asset & price_per_unit,
+  const asset & quantity){
+
+    uint8_t type_in;
+    if (type == util::type_buy_offer ) {
+      type_in = util::type_sell_offer;
+    }else if (type == util::type_sell_offer) {
+      type_in = util::type_buy_offer;
+    }
+
+    if(status_offer == util::status_active) {
+      if (token_idx_offer == token_id) {
+        if (price_per_unit_offer == price_per_unit) {
+          if (available_quantity_offer.amount > 0 ) {
+            if (type_offer == type_in) {
+              return true;
+            }
+          }
+
+        }
+      }
+    } else {
+      return false;
+    }
+  }
