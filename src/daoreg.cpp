@@ -414,10 +414,6 @@ void daoreg::createbuyoffer (
      + ( uint128_t(0xFFFFFFFFFFFFFFFF & price_per_unit.amount ) << 56 )   
     );
 
-  //check(soitr_buy -> type == util::type_sell_offer, "Both offers are of the same type");
-  //check(soitr_buy -> status == util::status_closed, "Offer is not active");
-  //check(soitr_buy -> token_idx)
-
   bool offer_match = meets_requirements( 
                       soitr_buy -> type, 
                       soitr_buy -> status, 
@@ -435,7 +431,7 @@ void daoreg::createbuyoffer (
     storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::status_active, util::type_buy_offer);
   
   } else {
-    check(offer_match = true, "offer does not match");
+    check(offer_match == true, "offer does not match");
     storeoffer(dao_id, creator,  quantity, price_per_unit, token_id, util::status_closed, util::type_buy_offer);
     action(
       permission_level{ creator, name("active") },
@@ -467,12 +463,24 @@ void daoreg::createselloffer (
      + ( uint128_t(0xF & token_id) << 120 )
      + ( uint128_t(0xFFFFFFFFFFFFFFFF & price_per_unit.amount ) << 56 )  
     );
+
+  bool offer_match = meets_requirements( 
+                    boitr_sell -> type, 
+                    boitr_sell -> status, 
+                    boitr_sell -> token_idx,
+                    boitr_sell -> price_per_unit,
+                    boitr_sell -> available_quantity,
+                    util::type_sell_offer,
+                    token_id, 
+                    price_per_unit,
+                    quantity);
   const bool offer_not_exists = (boitr_sell == by_offer_match.end() || boitr_sell -> type != util::type_buy_offer);
 
   if (offer_not_exists) { 
     storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::status_active, util::type_sell_offer);
 
   } else {
+    check(offer_match == true, "offer does not match");
     storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::status_closed, util::type_sell_offer);
     action(
       permission_level{ creator, name("active") },
