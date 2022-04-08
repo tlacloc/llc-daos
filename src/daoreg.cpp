@@ -414,24 +414,21 @@ void daoreg::createbuyoffer (
      + ( uint128_t(0xFFFFFFFFFFFFFFFF & price_per_unit.amount ) << 56 )   
     );
 
-  bool offer_match = meets_requirements( 
-                      soitr_buy -> type, 
-                      soitr_buy -> status, 
-                      soitr_buy -> token_idx,
-                      soitr_buy -> price_per_unit,
-                      soitr_buy -> available_quantity,
-                      util::type_buy_offer,
-                      token_id, 
+  bool requirements_passed = meets_requirements( 
+                      soitr_buy -> offer_id,
+                      dao_id, 
+                      creator,
+                      quantity, 
                       price_per_unit,
-                      quantity);
+                      token_id,
+                      util::type_buy_offer);
 
-  bool offer_not_exists = (soitr_buy == by_offer_match.end() || soitr_buy -> type != util::type_sell_offer);
+  bool offer_exists = (soitr_buy != by_offer_match.end() && requirements_passed);
   
-  if (offer_not_exists) { 
+  if (!offer_exists) { 
     storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::status_active, util::type_buy_offer);
   
   } else {
-    check(offer_match == true, "offer does not match");
     storeoffer(dao_id, creator,  quantity, price_per_unit, token_id, util::status_closed, util::type_buy_offer);
     action(
       permission_level{ creator, name("active") },
@@ -464,23 +461,21 @@ void daoreg::createselloffer (
      + ( uint128_t(0xFFFFFFFFFFFFFFFF & price_per_unit.amount ) << 56 )  
     );
 
-  bool offer_match = meets_requirements( 
-                    boitr_sell -> type, 
-                    boitr_sell -> status, 
-                    boitr_sell -> token_idx,
-                    boitr_sell -> price_per_unit,
-                    boitr_sell -> available_quantity,
-                    util::type_sell_offer,
-                    token_id, 
-                    price_per_unit,
-                    quantity);
-  const bool offer_not_exists = (boitr_sell == by_offer_match.end() || boitr_sell -> type != util::type_buy_offer);
+  bool requirements_passed = meets_requirements( 
+                      boitr_sell -> offer_id,
+                      dao_id, 
+                      creator,
+                      quantity, 
+                      price_per_unit,
+                      token_id,
+                      util::type_sell_offer);
 
-  if (offer_not_exists) { 
+  const bool offer_exists = (boitr_sell != by_offer_match.end() && requirements_passed);
+
+  if (!offer_exists) { 
     storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::status_active, util::type_sell_offer);
 
   } else {
-    check(offer_match == true, "offer does not match");
     storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::status_closed, util::type_sell_offer);
     action(
       permission_level{ creator, name("active") },
@@ -820,35 +815,54 @@ name daoreg::get_token_account(const uint64_t & dao_id, const symbol & token_sym
 }
 
 bool daoreg::meets_requirements(
-  const uint8_t & type_offer,
-  const uint8_t & status_offer,
-  const uint8_t & token_idx_offer,
-  const asset & price_per_unit_offer,
-  const asset & available_quantity_offer,
-  const uint8_t & type, 
+  const uint64_t & offer_id,
+  const uint64_t & dao_id,
+  const name & creator,
+  const asset & quantity,
+  const asset & price_per_unit, 
   const uint8_t & token_id,
-  const asset & price_per_unit,
-  const asset & quantity){
+  const uint8_t & type){
 
-    uint8_t type_in;
-    if (type == util::type_buy_offer ) {
-      type_in = util::type_sell_offer;
-    }else if (type == util::type_sell_offer) {
-      type_in = util::type_buy_offer;
+    offers_table offer_t( get_self(), dao_id);
+    auto ofit = offer_t.find(offer_id);
+
+    if (ofit == offer_t.end()) {return false; }
+
+    if (ofit -> creator == creator ) {return false;}
+
+    if (ofit -> type == util::type_sell_offer && ofit -> status == util::status_active) {
+      return type == util::type_buy_offer 
+        && ofit->available_quantity.amount > 0 
+        && ofit -> token_idx == token_id 
+        && ofit -> price_per_unit.amount == price_per_unit.amount;
     }
 
-    if(status_offer == util::status_active) {
-      if (token_idx_offer == token_id) {
-        if (price_per_unit_offer == price_per_unit) {
-          if (available_quantity_offer.amount > 0 ) {
-            if (type_offer == type_in) {
-              return true;
-            }
-          }
-
-        }
-      }
-    } else {
-      return false;
+    if (ofit -> type == util::type_buy_offer && ofit -> status == util::status_active) {
+      return type == util::type_sell_offer 
+        && ofit -> available_quantity.amount > 0
+        && ofit -> token_idx == token_id 
+        && ofit -> price_per_unit.amount == price_per_unit.amount;
     }
+
+    // uint8_t type_in;
+    // if (type == util::type_buy_offer ) {
+    //   type_in = util::type_sell_offer;
+    // }else if (type == util::type_sell_offer) {
+    //   type_in = util::type_buy_offer;
+    // }
+
+    // if(status_offer == util::status_active) {
+    //   if (token_idx_offer == token_id) {
+    //     if (price_per_unit_offer == price_per_unit) {
+    //       if (available_quantity_offer.amount > 0 ) {
+    //         if (type_offer == type_in) {
+    //           return true;
+    //         }
+    //       }
+
+    //     }
+    //   }
+    // } else {
+    //   return false;
+    // }
   }

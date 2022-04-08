@@ -595,6 +595,7 @@ describe('Tests for offers in dao registry', async function () {
       json: true,
       limit: 100
     })
+    console.log('Afert Bob balance is: ', bobsBalance )
 
     expect(bobsBalance.rows).to.deep.equals([{
       id: 0,
@@ -618,6 +619,8 @@ describe('Tests for offers in dao registry', async function () {
       json: true,
       limit: 100
     })
+    console.log('Afert Alice balance is: ', alicesBalance )
+
 
     expect(alicesBalance.rows).to.deep.equals([{
       id: 0,
