@@ -318,6 +318,7 @@ ACTION daoreg::createoffer (
   check(sitr != token_by_symbol.end(), "createoffer: Token not found");
 
   // has_enough_balance(dao_id, creator, quantity); // balances table daoreg
+  // sell_offer -> type = 0, buy_offer -> type = 1
 
   if ( type == util::type_sell_offer) {
 
@@ -334,7 +335,7 @@ ACTION daoreg::createoffer (
 void daoreg::storeoffer ( 
   const uint64_t & dao_id, 
   const name & creator, 
-  const asset & quantity, 
+  const asset & quantity,
   const asset & price_per_unit,
   const uint8_t & token_id,
   const uint8_t & status,
@@ -342,23 +343,52 @@ void daoreg::storeoffer (
 
   offers_table offer_t(get_self(), dao_id);
 
-    offer_t.emplace(get_self(), [&](auto & item){
-      item.offer_id = offer_t.available_primary_key();
-      item.creator = creator;
-      item.available_quantity = quantity;
-      item.total_quantity = quantity;
-      item.price_per_unit = price_per_unit; // always in TLOS  tlostoken
-      item.status = status;
-      item.creation_date = current_time_point();
-      item.type = type;
-      item.token_idx = token_id;
-      item.match_id = (uint128_t(0xF                  & type)                   << 124) 
-                      + (uint128_t(0xF                & util::status_active)    << 122)
-                      + (uint128_t(0xF                & token_id)               << 120)
-                      + (uint128_t(0xFFFFFFFFFFFFFFFF & price_per_unit.amount)  << 56 ) 
-                      + (uint128_t(0xFFFFFFFFFFFFFF   &  std::numeric_limits<uint64_t>::max() - current_time_point().sec_since_epoch()));
+  const eosio::asset new_quantity = (status == util::status_closed) ? asset(0, quantity.symbol) : quantity;
+
+  offer_t.emplace(get_self(), [&](auto & item){
+    item.offer_id = offer_t.available_primary_key();
+    item.creator = creator;
+    item.available_quantity = new_quantity;
+    item.total_quantity = quantity;
+    item.price_per_unit = price_per_unit; // always in TLOS  tlostoken
+    item.status = status;
+    item.creation_date = current_time_point();
+    item.type = type;
+    item.token_idx = token_id;
+    item.match_id = (uint128_t(0xF                  & type)                   << 124) 
+                    + (uint128_t(0xF                & util::status_active)    << 122)
+                    + (uint128_t(0xF                & token_id)               << 120)
+                    + (uint128_t(0xFFFFFFFFFFFFFFFF & price_per_unit.amount)  << 56 ) 
+                    + (uint128_t(0xFFFFFFFFFFFFFF   &  std::numeric_limits<uint64_t>::max() - current_time_point().sec_since_epoch()));
+  });
+	// const uint8_t type_sell_offer = 0 -> locked: DTK
+	// const uint8_t type_buy_offer  = 1 -> locked: TLOS
+
+  if (type == util::type_sell_offer) {
+    name token_account = get_token_account( dao_id, quantity.symbol);
+
+    balances_table _balances(get_self(), creator.value);
+    auto balances_by_token_account_token = _balances.get_index<name("bytkaccttokn")>();
+    auto itr = balances_by_token_account_token.find((uint128_t(token_account.value) << 64) + quantity.symbol.raw());
+    
+    balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
+      user.available -= quantity;
+      user.locked += quantity;
     });
 
+  } 
+  else if (type == util::type_buy_offer) {
+    name system_token_account = get_token_account( dao_id, price_per_unit.symbol );
+    
+    balances_table _balances(get_self(), creator.value);
+    auto balances_by_token_account_token = _balances.get_index<name("bytkaccttokn")>();
+    auto itr = balances_by_token_account_token.find((uint128_t(system_token_account.value) << 64) + price_per_unit.symbol.raw());
+    
+    balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
+      user.available -= asset(price_per_unit.amount * quantity.amount /10000, price_per_unit.symbol);;
+      user.locked += asset(price_per_unit.amount * quantity.amount /10000, price_per_unit.symbol);
+    });
+  }
 
 }
 
@@ -384,19 +414,28 @@ void daoreg::createbuyoffer (
      + ( uint128_t(0xFFFFFFFFFFFFFFFF & price_per_unit.amount ) << 56 )   
     );
 
-  if (soitr_buy == by_offer_match.end()) {
+  bool requirements_passed = meets_requirements( 
+                      soitr_buy -> offer_id,
+                      dao_id, 
+                      creator,
+                      quantity, 
+                      price_per_unit,
+                      token_id,
+                      util::type_buy_offer);
 
+  bool offer_exists = (soitr_buy != by_offer_match.end() && requirements_passed);
+  
+  if (!offer_exists) { 
     storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::status_active, util::type_buy_offer);
-
+  
   } else {
-
+    storeoffer(dao_id, creator,  quantity, price_per_unit, token_id, util::status_closed, util::type_buy_offer);
     action(
       permission_level{ creator, name("active") },
       _self,
       "acceptoffer"_n,
       std::make_tuple(dao_id, creator, soitr_buy->offer_id)
     ).send();
-
   }
 }
 
@@ -414,6 +453,7 @@ void daoreg::createselloffer (
   auto by_offer_match = offer_t.get_index<eosio::name("byoffermatch")>();
 
   // offer match
+
   auto boitr_sell = by_offer_match.lower_bound( 
       ( uint128_t(0xF & util::type_buy_offer) << 124 ) 
      + ( uint128_t(0xF & util::status_active) << 122 )
@@ -421,12 +461,22 @@ void daoreg::createselloffer (
      + ( uint128_t(0xFFFFFFFFFFFFFFFF & price_per_unit.amount ) << 56 )  
     );
 
-  if (boitr_sell == by_offer_match.end()) {
+  bool requirements_passed = meets_requirements( 
+                      boitr_sell -> offer_id,
+                      dao_id, 
+                      creator,
+                      quantity, 
+                      price_per_unit,
+                      token_id,
+                      util::type_sell_offer);
 
+  const bool offer_exists = (boitr_sell != by_offer_match.end() && requirements_passed);
+
+  if (!offer_exists) { 
     storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::status_active, util::type_sell_offer);
 
   } else {
-    
+    storeoffer(dao_id, creator, quantity, price_per_unit, token_id, util::status_closed, util::type_sell_offer);
     action(
       permission_level{ creator, name("active") },
       _self,
@@ -444,7 +494,7 @@ ACTION daoreg::removeoffer (const uint64_t & dao_id, const uint64_t & offer_id) 
   offers_table offer_t(get_self(), dao_id);
 
   auto ofit = offer_t.find(offer_id);
-  check(ofit != offer_t.end(), "Offer not found");
+  check(ofit != offer_t.end(), "removeoffer: Offer not found");
 
   require_auth( has_auth(ofit->creator) ? ofit->creator : get_self() );
 
@@ -460,7 +510,7 @@ ACTION daoreg::acceptoffer (const uint64_t & dao_id, const name & account, const
   offers_table offer_t(get_self(), dao_id);
 
   auto ofit = offer_t.find(offer_id);
-  check(ofit != offer_t.end(), "Offer not found");
+  check(ofit != offer_t.end(), "acceptoffer:Offer not found");
 
   check(ofit->status == util::status_active, "Offer is not active");
 
@@ -493,7 +543,7 @@ void daoreg::resolve_buy_offer(
   offers_table offer_t(get_self(), dao_id);
 
   auto ofit = offer_t.find(offer_id);
-  check(ofit != offer_t.end(), "Offer not found");
+  check(ofit != offer_t.end(), "resolve_buy_offer: Offer not found");
 
   check(ofit->status == util::status_active, "Offer is not active");
 
@@ -538,7 +588,7 @@ void daoreg::resolve_sell_offer(
   offers_table offer_t(get_self(), dao_id);
 
   auto ofit = offer_t.find(offer_id);
-  check(ofit != offer_t.end(), "Offer not found");
+  check(ofit != offer_t.end(), "resolve_sell_offer: Offer not found");
 
   check(ofit->status == util::status_active, "Offer is not active");
 
@@ -612,9 +662,8 @@ void daoreg::remove_balance(
   check(itr->available >= quantity, "You do not have enough balance");
 
   balances_by_token_account_token.modify(itr, get_self(), [&](auto& user){
-    user.available -= quantity;
+    user.locked -= quantity;
   });
-
 }
 
 void daoreg::send_transfer(
@@ -764,3 +813,56 @@ name daoreg::get_token_account(const uint64_t & dao_id, const symbol & token_sym
   return token_account;
 
 }
+
+bool daoreg::meets_requirements(
+  const uint64_t & offer_id,
+  const uint64_t & dao_id,
+  const name & creator,
+  const asset & quantity,
+  const asset & price_per_unit, 
+  const uint8_t & token_id,
+  const uint8_t & type){
+
+    offers_table offer_t( get_self(), dao_id);
+    auto ofit = offer_t.find(offer_id);
+
+    if (ofit == offer_t.end()) {return false; }
+
+    if (ofit -> creator == creator ) {return false;}
+
+    if (ofit -> type == util::type_sell_offer && ofit -> status == util::status_active) {
+      return type == util::type_buy_offer 
+        && ofit->available_quantity.amount > 0 
+        && ofit -> token_idx == token_id 
+        && ofit -> price_per_unit.amount == price_per_unit.amount;
+    }
+
+    if (ofit -> type == util::type_buy_offer && ofit -> status == util::status_active) {
+      return type == util::type_sell_offer 
+        && ofit -> available_quantity.amount > 0
+        && ofit -> token_idx == token_id 
+        && ofit -> price_per_unit.amount == price_per_unit.amount;
+    }
+
+    // uint8_t type_in;
+    // if (type == util::type_buy_offer ) {
+    //   type_in = util::type_sell_offer;
+    // }else if (type == util::type_sell_offer) {
+    //   type_in = util::type_buy_offer;
+    // }
+
+    // if(status_offer == util::status_active) {
+    //   if (token_idx_offer == token_id) {
+    //     if (price_per_unit_offer == price_per_unit) {
+    //       if (available_quantity_offer.amount > 0 ) {
+    //         if (type_offer == type_in) {
+    //           return true;
+    //         }
+    //       }
+
+    //     }
+    //   }
+    // } else {
+    //   return false;
+    // }
+  }

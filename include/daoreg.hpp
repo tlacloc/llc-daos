@@ -173,6 +173,15 @@ CONTRACT daoreg : public contract {
       const uint8_t & status,
       const uint8_t & type);
 
+    bool meets_requirements(
+      const uint64_t & offer_id,
+      const uint64_t & dao_id,
+      const name & creator,
+      const asset & quantity,
+      const asset & price_per_unit, 
+      const uint8_t & token_id,
+      const uint8_t & type);
+
     name get_token_account(
       const uint64_t & dao_id, 
       const symbol & token_symbol);
